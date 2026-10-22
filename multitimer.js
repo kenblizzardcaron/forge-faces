@@ -1,18 +1,29 @@
 // Multi-timer: three concurrent countdown timers on one face.
-// Readable source is over the 8158-byte limit: upload multitimer.min.js (node tools/build-face.js examples/multitimer.js examples/multitimer.min.js).
+// Readable source is over the 8158-byte limit: upload a built multitimer-<style>.min.js.
+// Build all three: node tools/build-face.js examples/multitimer.js examples
 const subscribe = E_BUTTONS + E_A_LONG + E_L_LONG;
+var BEEP_STYLE = 'stock';
 var IDLE = 0, RUNNING = 1, PAUSED = 2, RUNG = 3, ARMED = 4;
 var NORMAL = 0, FAST = 1, INTERVAL = 2;
 var VIEW_TIMER = 0, VIEW_EDIT = 1, VIEW_PRESETS = 2;
 var REPEAT_NONE = 0, REPEAT_EDIT = 1, REPEAT_ADD = 2;
+// Stock triple: 8 steps of 125 ms per 1000 ms period; beeps on steps 0-2, LED on steps 0-3.
+var RING_STEP_MS = 125, STEPS_PER_PERIOD = 8, BEEPS_PER_TRIPLE = 3, LED_STEPS = 4;
+var TRIPLES_ON_EXPIRY = 20, TRIPLES_ON_INTERVAL = 10, TRIPLES_OFF_SCREEN = 5, TRIPLES_COUNTDOWN_CHANGE = 1;
+// Ping: one beep per PING_STEP_MS.
+var PING_STEP_MS = 500, PING_BEEPS_ON_SCREEN = 40, PING_BEEPS_OFF_SCREEN = 10;
+// Countdown: spacing of the three beeps for an interval change; tuned on hardware.
+var CHANGE_BEEP_MS = RING_STEP_MS;
+// Countdown cues beep at 5, 4, 3, 2, 1 s left. A timer's cue holds the last second beeped (CUE_FROM_S + 1 = none).
+var CUE_FROM_S = 5;
 
-function newTimer() { return { seconds: 0, state: IDLE, endsAt: 0, pausedMs: 0, mode: NORMAL, slot: 0 }; }
+function newTimer() { return { seconds: 0, state: IDLE, endsAt: 0, pausedMs: 0, mode: NORMAL, slot: 0, cue: CUE_FROM_S + 1 }; }
 var presets = [60, 180, 300, 600, 900, 1500, 1800, 2700, 3600, 64800];
 var timers = [newTimer(), newTimer(), newTimer()];
 var current = 0, view = VIEW_TIMER, editField = 0, presetIndex = 0, repeating = REPEAT_NONE, messageTicks = 0;
 var buttonDown = [0, 0], longFired = 0, comboActive = 0;
 var tickTimer = -1, ringTimer = -1, expiryTimer = -1;
-var ringQueue = [], ringingIndex = -1, beepsLeft = 0, ringOnScreen = 0;
+var ringQueue = [], ringingIndex = -1, ringIsTriple = false, ringStepMs = PING_STEP_MS, ringStepsDone = 0, ringStepsTotal = 0, ringOnScreen = false;
 var bleBuffer = '', bleNextSeq = 0;  // BLE reassembly: bytes so far, next expected seq
 
 function now() { return new Date().getTime(); }
@@ -59,7 +70,7 @@ function tick() {
   if (repeating == REPEAT_EDIT && view == VIEW_EDIT && buttonDown[0]) incrementField();
   // Guarded by !comboActive: an A+L combo can switch current mid-hold onto another fast timer.
   if (repeating == REPEAT_ADD && buttonDown[1] && !comboActive && isFastActive(timers[current])) addMinute(timers[current]);
-  checkExpiries();
+  checkDue();
   draw();
 }
 
@@ -82,16 +93,19 @@ function pickTimerToShow() {
 }
 
 // Runs on and off screen: rings anything due, then arms a one-shot if an expiry is near.
-function clock_minute() { checkExpiries(); armExpiryWake(); }
+function clock_minute() { checkDue(); armExpiryWake(); }
 
-// Off screen the 250 ms tick is gone, so a one-shot wakes the face at the next expiry within a minute.
+// Off screen the 250 ms tick is gone, so a one-shot wakes the face at the next expiry or cue within a minute.
 function armExpiryWake() {
   if (Ollee.active()) return;
   if (expiryTimer != -1) Ollee.clearTimeout(expiryTimer);
   expiryTimer = -1;
   var d = 60001, x;  // sentinel: nothing due within a minute
-  for (var i = 0; i < 3; i++) if (timers[i].state == RUNNING) { x = timers[i].endsAt - now(); if (x < d) d = x; }
-  if (d <= 60000) expiryTimer = Ollee.setTimeout(function () { expiryTimer = -1; checkExpiries(); armExpiryWake(); }, Math.max(d, 1));
+  for (var i = 0; i < 3; i++) if (timers[i].state == RUNNING) {
+    x = timers[i].endsAt - now(); if (x < d) d = x;
+    x = nextCueAt(timers[i]) - now(); if (x < d) d = x;
+  }
+  if (d <= 60000) expiryTimer = Ollee.setTimeout(function () { expiryTimer = -1; checkDue(); armExpiryWake(); }, Math.max(d, 1));
 }
 
 function exit() {
@@ -113,8 +127,8 @@ function incrementField() {
   timers[current].seconds = hr * 3600 + min * 60 + sec;
 }
 
-function startTimer(t) { t.state = RUNNING; t.mode = NORMAL; t.endsAt = now() + t.seconds * 1000; }
-function clearTimer(t) { t.state = IDLE; t.mode = NORMAL; t.slot = 0; }
+function startTimer(t) { t.state = RUNNING; t.mode = NORMAL; t.endsAt = now() + t.seconds * 1000; t.cue = CUE_FROM_S + 1; }
+function clearTimer(t) { t.state = IDLE; t.mode = NORMAL; t.slot = 0; t.cue = CUE_FROM_S + 1; }
 
 function onATap() {
   if (view == VIEW_EDIT) incrementField();
@@ -140,13 +154,14 @@ function isFastActive(t) { return t.mode == FAST && (t.state == RUNNING || t.sta
 function addMinute(t) {
   if (t.state == ARMED) { t.state = RUNNING; t.endsAt = now(); }
   t.endsAt = Math.min(t.endsAt + 60000, now() + 86399000);
+  t.cue = CUE_FROM_S + 1;
 }
 function onAHold() {
   if (view == VIEW_EDIT) { repeating = REPEAT_EDIT; incrementField(); }
   else if (view == VIEW_TIMER && timers[current].state == IDLE && presets[0] > 0) startInterval(timers[current]);
 }
 // Interval: runs preset slots 1..10 in turn; the zero slot ends the run.
-function startInterval(t) { t.mode = INTERVAL; t.slot = 0; t.state = RUNNING; t.endsAt = now() + presets[0] * 1000; messageTicks = 4; }
+function startInterval(t) { t.mode = INTERVAL; t.slot = 0; t.state = RUNNING; t.endsAt = now() + presets[0] * 1000; t.cue = CUE_FROM_S + 1; messageTicks = 4; }
 
 // Bluetooth: a 45-byte message comes as 3 writes, each [seq] + data. Bad order resets.
 function ble_rx(d) {
@@ -188,36 +203,78 @@ function onCombo() { if (view == VIEW_TIMER) current = (current + 1) % 3; }
 function checkExpiries() {
   for (var i = 0; i < 3; i++) if (timers[i].state == RUNNING && now() >= timers[i].endsAt) expireTimer(i);
 }
+function checkDue() { checkExpiries(); checkCues(); }
+
+// Countdown: beeps once when a running timer first reaches each whole second from 5 down to 1.
+function checkCues() {
+  if (BEEP_STYLE != 'countdown') return;
+  for (var i = 0; i < 3; i++) {
+    var t = timers[i], s;
+    if (t.state != RUNNING) continue;
+    s = Math.ceil(remainingMs(t) / 1000);
+    if (s >= 1 && s < t.cue) { t.cue = s; Ollee.beep(); }
+  }
+}
+// Clock time of a running countdown timer's next cue, or Infinity when none is left this slot.
+function nextCueAt(t) {
+  if (BEEP_STYLE != 'countdown' || t.cue <= 1) return Infinity;
+  return t.endsAt - (t.cue - 1) * 1000;
+}
 function expireTimer(i) {
   var t = timers[i], stepped = false;
   while (t.mode == INTERVAL && t.slot < 9 && presets[t.slot + 1] > 0 && now() >= t.endsAt) {
-    t.slot++; t.endsAt += presets[t.slot] * 1000; stepped = true;
+    t.slot++; t.endsAt += presets[t.slot] * 1000; t.cue = CUE_FROM_S + 1; stepped = true;
   }
-  if (now() < t.endsAt) { if (stepped) Ollee.beep(); return; }
+  if (now() < t.endsAt) {
+    if (stepped) { if (BEEP_STYLE == 'ping') Ollee.beep(); else queueRing(i, true); }
+    return;
+  }
   timers[i].state = RUNG;
   if (Ollee.active()) { current = i; view = VIEW_TIMER; repeating = REPEAT_NONE; }
-  queueRing(i);
+  queueRing(i, false);
 }
-function queueRing(i) {
-  ringQueue.push(i);
+// Interval changes ring fewer triples than expiry in stock; countdown rings one triple for them.
+function queueRing(index, interval) {
+  ringQueue.push({ index: index, interval: interval });
   if (ringingIndex < 0) nextRing();
 }
 function nextRing() {
   if (ringQueue.length === 0) { ringingIndex = -1; Ollee.led_off(); return; }
-  ringingIndex = ringQueue.shift();
-  ringOnScreen = Ollee.active() ? 1 : 0;
-  beepsLeft = ringOnScreen ? 40 : 10;
+  var entry = ringQueue.shift();
+  ringingIndex = entry.index;
+  ringOnScreen = Ollee.active();
+  ringIsTriple = BEEP_STYLE == 'stock' || (BEEP_STYLE == 'countdown' && entry.interval);
+  ringStepMs = !ringIsTriple ? PING_STEP_MS : (BEEP_STYLE == 'countdown' ? CHANGE_BEEP_MS : RING_STEP_MS);
+  ringStepsTotal = ringStepsFor(entry);
+  ringStepsDone = 0;
   ringStep();
 }
-// One beep per 500 ms: 40 beeps on screen (~20 s), 10 off screen (~5 s).
+// Triples count 8 steps each; ping counts single beeps.
+function ringStepsFor(entry) {
+  if (ringIsTriple) {
+    var triples = TRIPLES_OFF_SCREEN;
+    if (BEEP_STYLE == 'countdown') triples = TRIPLES_COUNTDOWN_CHANGE;
+    else if (ringOnScreen) triples = entry.interval ? TRIPLES_ON_INTERVAL : TRIPLES_ON_EXPIRY;
+    return triples * STEPS_PER_PERIOD;
+  }
+  return ringOnScreen ? PING_BEEPS_ON_SCREEN : PING_BEEPS_OFF_SCREEN;
+}
+// Triple steps are ringStepMs apart; ping beeps are PING_STEP_MS apart and the LED alternates.
 function ringStep() {
   ringTimer = -1;
   if (ringingIndex < 0) return;
-  Ollee.beep();
-  if (beepsLeft % 2 === 0) Ollee.led_on(); else Ollee.led_off();
-  beepsLeft--;
-  if (beepsLeft > 0) ringTimer = Ollee.setTimeout(ringStep, 500);
-  else { Ollee.led_off(); if (!ringOnScreen) ringQueue = []; nextRing(); }
+  var stepInPeriod = ringIsTriple ? ringStepsDone % STEPS_PER_PERIOD : ringStepsDone % 2;
+  var beeps = !ringIsTriple || stepInPeriod < BEEPS_PER_TRIPLE;
+  var ledOn = ringIsTriple ? stepInPeriod < LED_STEPS : stepInPeriod === 0;
+  if (beeps) Ollee.beep();
+  if (ledOn) Ollee.led_on(); else Ollee.led_off();
+  ringStepsDone++;
+  if (ringStepsDone === ringStepsTotal) {
+    if (!ringOnScreen) ringQueue = [];
+    nextRing();
+    return;
+  }
+  ringTimer = Ollee.setTimeout(ringStep, ringStepMs);
 }
 function stopRing() {
   if (ringTimer != -1) Ollee.clearTimeout(ringTimer);

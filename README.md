@@ -5,24 +5,19 @@ Custom watch faces for the [Ollee Watch](https://www.olleewatch.com), written fo
 
 | Face | What it does |
 | --- | --- |
-| [multitimer.js](multitimer.js) ([upload: multitimer.min.js](multitimer.min.js)) | Feature-parity replacement for the official TIMER face, with up to three timers running at once. |
+| [multitimer.js](multitimer.js) (upload one of the [builds](#beep-styles)) | Feature-parity replacement for the official TIMER face, with up to three timers running at once. |
 
 ## Try a face
 
 Forge is in Beta 1, so faces run in the emulator only; deploying to the watch arrives in Beta 2.
 
-Each face comes as readable source (`name.js`) and a minified build (`name.min.js`). Forge scripts must fit in 8158 bytes, so **load and upload the `.min.js`**; read the `.js`.
+Each face comes as readable source (`name.js`) and minified builds (`name-<variant>.min.js`). Forge scripts must fit in 8158 bytes, so **load and upload a `.min.js`**; read the `.js`.
 
 1. Open the [Forge emulator](https://github.com/olleewatch/forge_emulator) (`index.html`).
-2. **Load file** → `multitimer.min.js` (or paste it into the editor).
+2. **Load file** → for example `multitimer-stock.min.js` (or paste it into the editor).
 3. Click **Run**.
 
-To rebuild a `.min.js` after editing the source (top-level names are shortened; the hook names the watch calls and `subscribe` are kept):
-
-```sh
-npx terser@5 multitimer.js --compress toplevel=false -o multitimer.min.js \
-  --mangle 'toplevel,reserved=[subscribe,init,enter,exit,a_short,a_long,l_short,l_long,tilt,tap,button,ble_rx,clock_minute,clock_hour]'
-```
+To rebuild after editing the source: `npm install terser@5 && node build.js`. Top-level names are shortened; the hook names the watch calls and `subscribe` are kept.
 
 ## multitimer.js
 
@@ -31,6 +26,20 @@ A feature-parity replacement for the official Ollee TIMER face that adds **simul
 - **Same as the official face:** edit to 23:59:59, start / pause / clear, 10 presets, interval mode, fast mode, and the same buttons for each.
 - **Added:** three independent timers (number shown on the day digits), switched with **A + L**; the face opens on whichever timer finishes next; presets can be saved from the watch.
 - **Different:** **LAP** stands in for the blinking bell, which Forge faces can't control; the weekday digits show the Forge slot name (`FA`–`FC`) instead of `TI`.
+
+### Beep styles
+
+One source, three builds that differ only in how they beep:
+
+| Build | Interval change | Timer end / end of interval set |
+| --- | --- | --- |
+| [multitimer-stock.min.js](multitimer-stock.min.js) | Like the official face: *beepbeepbeep* every second for 10 s while the next interval runs; any button silences it | The same triple pattern for up to 20 s, until a button |
+| [multitimer-ping.min.js](multitimer-ping.min.js) | One short beep | A beep every half second for up to 20 s, until a button |
+| [multitimer-countdown.min.js](multitimer-countdown.min.js) | A beep at 5, 4, 3, 2 and 1 s left in every interval, then *beepbeepbeep* | The same countdown, then the half-second ring |
+
+On another face, beeping you can't stop is capped at 5 s in every style.
+
+### Buttons
 
 | Button | Does |
 | --- | --- |
