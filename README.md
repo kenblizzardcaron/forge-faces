@@ -5,16 +5,16 @@ Custom watch faces for the [Ollee Watch](https://www.olleewatch.com), written fo
 
 | Face | What it does |
 | --- | --- |
-| [multitimer.js](multitimer.js) (upload one of the [builds](#beep-styles)) | Feature-parity replacement for the official TIMER face, with up to three timers running at once. |
+| [multitimer.js](multitimer.js) (upload [multitimer.min.js](multitimer.min.js)) | Feature-parity replacement for the official TIMER face, with up to three timers running at once. |
 
 ## Try a face
 
-Forge is in Beta 1, so faces run in the emulator only; deploying to the watch arrives in Beta 2.
+Forge is in Beta 1, so faces run in the emulator only; Ollee plans deploying to the watch for Beta 2.
 
-Each face comes as readable source (`name.js`) and minified builds (`name-<variant>.min.js`). Forge scripts must fit in 8158 bytes, so **load and upload a `.min.js`**; read the `.js`.
+Each face comes as readable source (`name.js`) and a minified build (`name.min.js`). Forge scripts must fit in 8158 bytes, so **load and upload a `.min.js`**; read the `.js`.
 
 1. Open the [Forge emulator](https://github.com/olleewatch/forge_emulator) (`index.html`).
-2. **Load file** → for example `multitimer-stock.min.js` (or paste it into the editor).
+2. **Load file** → for example `multitimer.min.js` (or paste it into the editor).
 3. Click **Run**.
 
 To rebuild after editing the source: `npm install terser@5 && node build.js`. Top-level names are shortened; the hook names the watch calls and `subscribe` are kept.
@@ -29,13 +29,13 @@ A feature-parity replacement for the official Ollee TIMER face that adds **simul
 
 ### Beep styles
 
-One source, three builds that differ only in how they beep:
+Three ways to beep, chosen over Bluetooth (see [below](#bluetooth-messages)); the face starts on **stock**:
 
-| Build | Interval change | Timer end / end of interval set |
+| Style | Interval change | Timer end / end of interval set |
 | --- | --- | --- |
-| [multitimer-stock.min.js](multitimer-stock.min.js) | Like the official face: *beepbeepbeep* every second for 10 s while the next interval runs; any button silences it | The same triple pattern for up to 20 s, until a button |
-| [multitimer-ping.min.js](multitimer-ping.min.js) | One short beep | A beep every half second for up to 20 s, until a button |
-| [multitimer-countdown.min.js](multitimer-countdown.min.js) | A beep at 5, 4, 3, 2 and 1 s left in every interval, then *beepbeepbeep* | The same countdown, then the half-second ring |
+| **stock** (`S0`) | Like the official face: *beepbeepbeep* every second for 10 s while the next interval runs; any button silences it | The same triple pattern for up to 20 s, until a button |
+| **ping** (`S1`) | One short beep | A beep every half second for up to 20 s, until a button |
+| **countdown** (`S2`) | A beep at 5, 4, 3, 2 and 1 s left in every interval, then *beepbeepbeep* | The same countdown, then the half-second ring |
 
 On another face, beeping you can't stop is capped at 5 s in every style.
 
@@ -52,12 +52,16 @@ On another face, beeping you can't stop is capped at 5 s in every style.
 
 - **LAP** blinks while the timer on screen runs; **PM** means another timer is running.
 - A timer finishing on screen beeps for up to 20 s; any button stops it. On another face it beeps for at most 5 s, then the face opens on that timer next time.
-- Presets and running timers reset when the watch reboots (Forge has no storage yet).
-- A phone can replace the presets or start a timer over the Forge Bluetooth service (format below).
+- Presets, the beep style and running timers reset when the watch reboots (Forge has no storage yet).
+- A phone can set the beep style, replace the presets or start a timer over the Forge Bluetooth service (formats below).
 
-### Bluetooth message
+### Bluetooth messages
 
-Write to the Forge RX characteristic (`C6FB0002-A37D-40AC-89BE-887D25E1F5B3`). One 45-byte message:
+Write to the Forge RX characteristic (`C6FB0002-A37D-40AC-89BE-887D25E1F5B3`). Today that means the emulator's Bluetooth panel: as of October 2026 the watch's firmware doesn't expose the Forge service.
+
+**Beep style:** the text `S0`, `S1` or `S2` (stock, ping, countdown), typed into the emulator's Bluetooth panel or nRF Connect's text mode.
+
+**Presets and timers:** one 45-byte binary message (the emulator panel sends typed text, so it can't send this one):
 
 | Byte | Meaning |
 | --- | --- |

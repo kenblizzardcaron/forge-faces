@@ -1,8 +1,10 @@
 // Multi-timer: three concurrent countdown timers on one face.
-// Readable source is over the 8158-byte limit: upload a built multitimer-<style>.min.js.
-// Build all three: node tools/build-face.js examples/multitimer.js examples
+// Readable source is over the 8158-byte limit: upload the built multitimer.min.js.
+// Build it: node tools/build-face.js examples/multitimer.js examples
 const subscribe = E_BUTTONS + E_A_LONG + E_L_LONG;
-var BEEP_STYLE = 'stock';
+var STOCK = 0, PING = 1, COUNTDOWN = 2;
+var beepStyle = STOCK;  // set over Bluetooth: text S0, S1 or S2
+var SETTINGS_MESSAGE = 0x53;
 var IDLE = 0, RUNNING = 1, PAUSED = 2, RUNG = 3, ARMED = 4;
 var NORMAL = 0, FAST = 1, INTERVAL = 2;
 var VIEW_TIMER = 0, VIEW_EDIT = 1, VIEW_PRESETS = 2;
@@ -166,6 +168,13 @@ function startInterval(t) { t.mode = INTERVAL; t.slot = 0; t.state = RUNNING; t.
 // Bluetooth: a 45-byte message comes as 3 writes, each [seq] + data. Bad order resets.
 function ble_rx(d) {
   try {
+    // Settings: 'S' then the style as a digit (text S0-S2) or a raw byte 0-2; other values are ignored.
+    if (d.charCodeAt(0) == SETTINGS_MESSAGE) {
+      var style = d.charCodeAt(1);
+      if (style >= 0x30) style -= 0x30;
+      if (d.length >= 2 && style <= COUNTDOWN) { beepStyle = style; armExpiryWake(); draw(); }
+      return;
+    }
     var q = d.charCodeAt(0);
     if (q == 0) { bleBuffer = ''; bleNextSeq = 0; }
     if (q != bleNextSeq || q > 2) { bleBuffer = ''; bleNextSeq = 0; return; }
@@ -207,7 +216,7 @@ function checkDue() { checkExpiries(); checkCues(); }
 
 // Countdown: beeps once when a running timer first reaches each whole second from 5 down to 1.
 function checkCues() {
-  if (BEEP_STYLE != 'countdown') return;
+  if (beepStyle != COUNTDOWN) return;
   for (var i = 0; i < 3; i++) {
     var t = timers[i], s;
     if (t.state != RUNNING) continue;
@@ -217,7 +226,7 @@ function checkCues() {
 }
 // Clock time of a running countdown timer's next cue, or Infinity when none is left this slot.
 function nextCueAt(t) {
-  if (BEEP_STYLE != 'countdown' || t.cue <= 1) return Infinity;
+  if (beepStyle != COUNTDOWN || t.cue <= 1) return Infinity;
   return t.endsAt - (t.cue - 1) * 1000;
 }
 function expireTimer(i) {
@@ -226,7 +235,7 @@ function expireTimer(i) {
     t.slot++; t.endsAt += presets[t.slot] * 1000; t.cue = CUE_FROM_S + 1; stepped = true;
   }
   if (now() < t.endsAt) {
-    if (stepped) { if (BEEP_STYLE == 'ping') Ollee.beep(); else queueRing(i, true); }
+    if (stepped) { if (beepStyle == PING) Ollee.beep(); else queueRing(i, true); }
     return;
   }
   timers[i].state = RUNG;
@@ -243,8 +252,8 @@ function nextRing() {
   var entry = ringQueue.shift();
   ringingIndex = entry.index;
   ringOnScreen = Ollee.active();
-  ringIsTriple = BEEP_STYLE == 'stock' || (BEEP_STYLE == 'countdown' && entry.interval);
-  ringStepMs = !ringIsTriple ? PING_STEP_MS : (BEEP_STYLE == 'countdown' ? CHANGE_BEEP_MS : RING_STEP_MS);
+  ringIsTriple = beepStyle == STOCK || (beepStyle == COUNTDOWN && entry.interval);
+  ringStepMs = !ringIsTriple ? PING_STEP_MS : (beepStyle == COUNTDOWN ? CHANGE_BEEP_MS : RING_STEP_MS);
   ringStepsTotal = ringStepsFor(entry);
   ringStepsDone = 0;
   ringStep();
@@ -253,7 +262,7 @@ function nextRing() {
 function ringStepsFor(entry) {
   if (ringIsTriple) {
     var triples = TRIPLES_OFF_SCREEN;
-    if (BEEP_STYLE == 'countdown') triples = TRIPLES_COUNTDOWN_CHANGE;
+    if (beepStyle == COUNTDOWN) triples = TRIPLES_COUNTDOWN_CHANGE;
     else if (ringOnScreen) triples = entry.interval ? TRIPLES_ON_INTERVAL : TRIPLES_ON_EXPIRY;
     return triples * STEPS_PER_PERIOD;
   }
