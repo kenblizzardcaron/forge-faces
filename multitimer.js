@@ -1,63 +1,65 @@
 // Multi-timer: three concurrent countdown timers on one face.
-// Over the 8158-byte limit unminified: upload the minified build (emulator: Minify, then Run minified).
+// Readable source is over the 8158-byte limit: upload multitimer.min.js (node tools/build-face.js examples/multitimer.js examples/multitimer.min.js).
 const subscribe = E_BUTTONS + E_A_LONG + E_L_LONG;
+var IDLE = 0, RUNNING = 1, PAUSED = 2, RUNG = 3, ARMED = 4;
+var NORMAL = 0, FAST = 1, INTERVAL = 2;
+var VIEW_TIMER = 0, VIEW_EDIT = 1, VIEW_PRESETS = 2;
+var REPEAT_NONE = 0, REPEAT_EDIT = 1, REPEAT_ADD = 2;
 
-// Timer states: 0 IDLE, 1 RUN, 2 PAUSE, 3 RUNG, 4 ARMED
-// Timer modes: 0 normal, 1 fast, 2 interval
-function mk() { return { s: 0, st: 0, e: 0, r: 0, m: 0, k: 0 }; }
-var P = [60, 180, 300, 600, 900, 1500, 1800, 2700, 3600, 64800];
-var T = [mk(), mk(), mk()];
-var cur = 0, ui = 0, ef = 0, pb = 0, rep = 0, mt = 0;
-var dn = [0, 0], lf = 0, cb = 0;
-var tk = -1, rg = -1, nx = -1;
-var rq = [], ri = -1, rn = 0, ron = 0;
-var bb = '', bs = 0;  // BLE reassembly: bytes so far, next expected seq
+function newTimer() { return { seconds: 0, state: IDLE, endsAt: 0, pausedMs: 0, mode: NORMAL, slot: 0 }; }
+var presets = [60, 180, 300, 600, 900, 1500, 1800, 2700, 3600, 64800];
+var timers = [newTimer(), newTimer(), newTimer()];
+var current = 0, view = VIEW_TIMER, editField = 0, presetIndex = 0, repeating = REPEAT_NONE, messageTicks = 0;
+var buttonDown = [0, 0], longFired = 0, comboActive = 0;
+var tickTimer = -1, ringTimer = -1, expiryTimer = -1;
+var ringQueue = [], ringingIndex = -1, beepsLeft = 0, ringOnScreen = 0;
+var bleBuffer = '', bleNextSeq = 0;  // BLE reassembly: bytes so far, next expected seq
 
 function now() { return new Date().getTime(); }
 function pad(n) { return ('0' + n).slice(-2); }
-function fmt(s) { return pad(Math.floor(s / 3600)) + pad(Math.floor(s / 60) % 60) + pad(s % 60); }
-function g(i) { return i == 9 ? '0' : String(i + 1); }
+function formatHMS(s) { return pad(Math.floor(s / 3600)) + pad(Math.floor(s / 60) % 60) + pad(s % 60); }
+function slotGlyph(i) { return i == 9 ? '0' : String(i + 1); }
 
-function rem(t) {
-  if (t.st == 1) return Math.max(0, t.e - now());
-  if (t.st == 2) return t.r;
-  if (t.st === 0) return t.s * 1000;
+function remainingMs(t) {
+  if (t.state == RUNNING) return Math.max(0, t.endsAt - now());
+  if (t.state == PAUSED) return t.pausedMs;
+  if (t.state === IDLE) return t.seconds * 1000;
   return 0;
 }
 
 function draw() {
   if (!Ollee.active()) return;
-  var ph = Math.floor(now() / 500) % 2 == 0;
-  var t = T[cur];
-  var main, c;
-  if (mt > 0) main = 'InTEr';
-  else if (ui == 2) main = fmt(P[pb]);
-  else if (ui == 1) {
-    main = fmt(t.s);
-    if (!ph && !rep) { var i = 4 - 2 * ef; main = main.slice(0, i) + '  ' + main.slice(i + 2); }
-  } else if (t.st == 3) main = ph ? '000000' : '      ';
-  else main = fmt(Math.ceil(rem(t) / 1000));
+  var blinkOn = Math.floor(now() / 500) % 2 == 0;
+  var t = timers[current];
+  var main, corner;
+  if (messageTicks > 0) main = 'InTEr';
+  else if (view == VIEW_PRESETS) main = formatHMS(presets[presetIndex]);
+  else if (view == VIEW_EDIT) {
+    main = formatHMS(t.seconds);
+    if (!blinkOn && !repeating) { var i = 4 - 2 * editField; main = main.slice(0, i) + '  ' + main.slice(i + 2); }
+  } else if (t.state == RUNG) main = blinkOn ? '000000' : '      ';
+  else main = formatHMS(Math.ceil(remainingMs(t) / 1000));
   Ollee.drawMain(main);
-  Ollee.drawColon(mt == 0);
+  Ollee.drawColon(messageTicks == 0);
 
-  if (ui == 2) c = g(pb);
-  else if (t.m == 2 && (t.st == 1 || t.st == 2)) c = g(t.k);
-  else if (t.m == 1 || (t.s === 0 && (t.st === 0 || t.st == 4))) c = 'F';
-  else c = ' ';
-  Ollee.drawDay(String(cur + 1) + c);
+  if (view == VIEW_PRESETS) corner = slotGlyph(presetIndex);
+  else if (t.mode == INTERVAL && (t.state == RUNNING || t.state == PAUSED)) corner = slotGlyph(t.slot);
+  else if (t.mode == FAST || (t.seconds === 0 && (t.state === IDLE || t.state == ARMED))) corner = 'F';
+  else corner = ' ';
+  Ollee.drawDay(String(current + 1) + corner);
 
-  Ollee.drawLap(ui === 0 && mt == 0 && (t.st == 1 || t.st == 4) && ph);
+  Ollee.drawLap(view === VIEW_TIMER && messageTicks == 0 && (t.state == RUNNING || t.state == ARMED) && blinkOn);
   var pm = false;
-  for (var j = 0; j < 3; j++) if (j != cur && (T[j].st == 1 || T[j].st == 4)) pm = true;
+  for (var j = 0; j < 3; j++) if (j != current && (timers[j].state == RUNNING || timers[j].state == ARMED)) pm = true;
   Ollee.drawPM(pm);
 }
 
 function tick() {
-  if (mt > 0) mt--;
-  if (rep == 1 && ui == 1 && dn[0]) inc();
-  // Guarded by !cb: an A+L combo can switch cur mid-hold onto another fast timer.
-  if (rep == 2 && dn[1] && !cb && fast(T[cur])) addMin(T[cur]);
-  chk();
+  if (messageTicks > 0) messageTicks--;
+  if (repeating == REPEAT_EDIT && view == VIEW_EDIT && buttonDown[0]) incrementField();
+  // Guarded by !comboActive: an A+L combo can switch current mid-hold onto another fast timer.
+  if (repeating == REPEAT_ADD && buttonDown[1] && !comboActive && isFastActive(timers[current])) addMinute(timers[current]);
+  checkExpiries();
   draw();
 }
 
@@ -65,198 +67,198 @@ function init() { Ollee.subscribe(E_CLOCK_MINUTE + E_BLE_RX); }
 
 function enter() {
   Ollee.clear();
-  tk = Ollee.setInterval(tick, 250);
-  ui = 0; rep = 0; dn = [0, 0]; cb = 0; lf = 0;
-  pick();
+  tickTimer = Ollee.setInterval(tick, 250);
+  view = VIEW_TIMER; repeating = REPEAT_NONE; buttonDown = [0, 0]; comboActive = 0; longFired = 0;
+  pickTimerToShow();
   draw();
 }
 
-// Shows the rung timer, else the running timer ending soonest, else keeps cur.
-function pick() {
-  var b = -1;
-  for (var i = 0; i < 3; i++) if (T[i].st == 3) { cur = i; return; }
-  for (var j = 0; j < 3; j++) if (T[j].st == 1 && (b < 0 || T[j].e < T[b].e)) b = j;
-  if (b >= 0) cur = b;
+// Shows the rung timer, else the running timer ending soonest, else keeps current.
+function pickTimerToShow() {
+  var soonest = -1;
+  for (var i = 0; i < 3; i++) if (timers[i].state == RUNG) { current = i; return; }
+  for (var j = 0; j < 3; j++) if (timers[j].state == RUNNING && (soonest < 0 || timers[j].endsAt < timers[soonest].endsAt)) soonest = j;
+  if (soonest >= 0) current = soonest;
 }
 
 // Runs on and off screen: rings anything due, then arms a one-shot if an expiry is near.
-function clock_minute() { chk(); arm(); }
+function clock_minute() { checkExpiries(); armExpiryWake(); }
 
 // Off screen the 250 ms tick is gone, so a one-shot wakes the face at the next expiry within a minute.
-function arm() {
+function armExpiryWake() {
   if (Ollee.active()) return;
-  if (nx != -1) Ollee.clearTimeout(nx);
-  nx = -1;
+  if (expiryTimer != -1) Ollee.clearTimeout(expiryTimer);
+  expiryTimer = -1;
   var d = 60001, x;  // sentinel: nothing due within a minute
-  for (var i = 0; i < 3; i++) if (T[i].st == 1) { x = T[i].e - now(); if (x < d) d = x; }
-  if (d <= 60000) nx = Ollee.setTimeout(function () { nx = -1; chk(); arm(); }, Math.max(d, 1));
+  for (var i = 0; i < 3; i++) if (timers[i].state == RUNNING) { x = timers[i].endsAt - now(); if (x < d) d = x; }
+  if (d <= 60000) expiryTimer = Ollee.setTimeout(function () { expiryTimer = -1; checkExpiries(); armExpiryWake(); }, Math.max(d, 1));
 }
 
 function exit() {
-  if (ri >= 0 && ron && T[ri].st == 3) clr(T[ri]);
+  if (ringingIndex >= 0 && ringOnScreen && timers[ringingIndex].state == RUNG) clearTimer(timers[ringingIndex]);
   stopRing();
-  rq = [];
-  if (tk != -1) Ollee.clearInterval(tk);
-  if (nx != -1) Ollee.clearTimeout(nx);
-  tk = nx = -1;
+  ringQueue = [];
+  if (tickTimer != -1) Ollee.clearInterval(tickTimer);
+  if (expiryTimer != -1) Ollee.clearTimeout(expiryTimer);
+  tickTimer = expiryTimer = -1;
   Ollee.led_off();
 }
 
-// Edit field ef: 0 seconds, 1 minutes, 2 hours. Wraps without carry.
-function inc() {
-  var s = T[cur].s, sec = s % 60, min = Math.floor(s / 60) % 60, hr = Math.floor(s / 3600);
-  if (ef == 0) sec = (sec + 1) % 60;
-  else if (ef == 1) min = (min + 1) % 60;
+// Edit field editField: 0 seconds, 1 minutes, 2 hours. Wraps without carry.
+function incrementField() {
+  var s = timers[current].seconds, sec = s % 60, min = Math.floor(s / 60) % 60, hr = Math.floor(s / 3600);
+  if (editField == 0) sec = (sec + 1) % 60;
+  else if (editField == 1) min = (min + 1) % 60;
   else hr = (hr + 1) % 24;
-  T[cur].s = hr * 3600 + min * 60 + sec;
+  timers[current].seconds = hr * 3600 + min * 60 + sec;
 }
 
-function start(t) { t.st = 1; t.m = 0; t.e = now() + t.s * 1000; }
-function clr(t) { t.st = 0; t.m = 0; t.k = 0; }
+function startTimer(t) { t.state = RUNNING; t.mode = NORMAL; t.endsAt = now() + t.seconds * 1000; }
+function clearTimer(t) { t.state = IDLE; t.mode = NORMAL; t.slot = 0; }
 
-function aTap() {
-  if (ui == 1) inc();
-  else if (ui == 2) { T[cur].s = P[pb]; ui = 0; }
-  else if (ui == 0) {
-    var t = T[cur];
-    if (t.st == 0 && t.s > 0) start(t);
-    else if (t.st == 1) { t.r = Math.max(0, t.e - now()); t.st = 2; }
-    else if (t.st == 2) { t.e = now() + t.r; t.st = 1; }
-    else if (t.st === 0) { t.st = 4; t.m = 1; }
-    else if (t.st == 4) clr(t);
+function onATap() {
+  if (view == VIEW_EDIT) incrementField();
+  else if (view == VIEW_PRESETS) { timers[current].seconds = presets[presetIndex]; view = VIEW_TIMER; }
+  else if (view == VIEW_TIMER) {
+    var t = timers[current];
+    if (t.state == IDLE && t.seconds > 0) startTimer(t);
+    else if (t.state == RUNNING) { t.pausedMs = Math.max(0, t.endsAt - now()); t.state = PAUSED; }
+    else if (t.state == PAUSED) { t.endsAt = now() + t.pausedMs; t.state = RUNNING; }
+    else if (t.state === IDLE) { t.state = ARMED; t.mode = FAST; }
+    else if (t.state == ARMED) clearTimer(t);
   }
 }
-function lTap() {
-  if (ui == 2) pb = (pb + 1) % 10;
-  else if (ui == 0 && T[cur].st == 0) { ui = 1; ef = 0; }
-  else if (ui == 1 && ++ef > 2) ui = 0;
-  else if (ui == 0 && T[cur].st == 2) clr(T[cur]);
-  else if (ui == 0 && fast(T[cur])) addMin(T[cur]);
+function onLTap() {
+  if (view == VIEW_PRESETS) presetIndex = (presetIndex + 1) % 10;
+  else if (view == VIEW_TIMER && timers[current].state == IDLE) { view = VIEW_EDIT; editField = 0; }
+  else if (view == VIEW_EDIT && ++editField > 2) view = VIEW_TIMER;
+  else if (view == VIEW_TIMER && timers[current].state == PAUSED) clearTimer(timers[current]);
+  else if (view == VIEW_TIMER && isFastActive(timers[current])) addMinute(timers[current]);
 }
 // Fast mode: a timer armed at zero starts on the first add; adds cap at 23:59:59.
-function fast(t) { return t.m == 1 && (t.st == 1 || t.st == 4); }
-function addMin(t) {
-  if (t.st == 4) { t.st = 1; t.e = now(); }
-  t.e = Math.min(t.e + 60000, now() + 86399000);
+function isFastActive(t) { return t.mode == FAST && (t.state == RUNNING || t.state == ARMED); }
+function addMinute(t) {
+  if (t.state == ARMED) { t.state = RUNNING; t.endsAt = now(); }
+  t.endsAt = Math.min(t.endsAt + 60000, now() + 86399000);
 }
-function aHold() {
-  if (ui == 1) { rep = 1; inc(); }
-  else if (ui == 0 && T[cur].st == 0 && P[0] > 0) ivl(T[cur]);
+function onAHold() {
+  if (view == VIEW_EDIT) { repeating = REPEAT_EDIT; incrementField(); }
+  else if (view == VIEW_TIMER && timers[current].state == IDLE && presets[0] > 0) startInterval(timers[current]);
 }
 // Interval: runs preset slots 1..10 in turn; the zero slot ends the run.
-function ivl(t) { t.m = 2; t.k = 0; t.st = 1; t.e = now() + P[0] * 1000; mt = 4; }
+function startInterval(t) { t.mode = INTERVAL; t.slot = 0; t.state = RUNNING; t.endsAt = now() + presets[0] * 1000; messageTicks = 4; }
 
 // Bluetooth: a 45-byte message comes as 3 writes, each [seq] + data. Bad order resets.
 function ble_rx(d) {
   try {
     var q = d.charCodeAt(0);
-    if (q == 0) { bb = ''; bs = 0; }
-    if (q != bs || q > 2) { bb = ''; bs = 0; return; }
-    bb += d.substr(1); bs++;
-    if (bb.length >= 45) { apply(bb); bb = ''; bs = 0; }
-  } catch (e) { bb = ''; bs = 0; }
+    if (q == 0) { bleBuffer = ''; bleNextSeq = 0; }
+    if (q != bleNextSeq || q > 2) { bleBuffer = ''; bleNextSeq = 0; return; }
+    bleBuffer += d.substr(1); bleNextSeq++;
+    if (bleBuffer.length >= 45) { applyBleMessage(bleBuffer); bleBuffer = ''; bleNextSeq = 0; }
+  } catch (e) { bleBuffer = ''; bleNextSeq = 0; }
 }
 // Message: [timer] [HH MM SS mode] then 10 little-endian uint32 presets.
 // Mode 0 saves, 1 saves and starts the timer, 2 saves and starts interval mode.
-function apply(b) {
+function applyBleMessage(b) {
   if (b.charCodeAt(0) > 2) return;
-  var n = b.charCodeAt(0), t = T[n], i, v, sec;
+  var n = b.charCodeAt(0), t = timers[n], i, v, sec;
   for (i = 0; i < 10; i++) {
     v = ((b.charCodeAt(5 + 4 * i) | (b.charCodeAt(6 + 4 * i) << 8) |
       (b.charCodeAt(7 + 4 * i) << 16) | (b.charCodeAt(8 + 4 * i) << 24)) >>> 0);
-    P[i] = Math.min(v, 86399);
+    presets[i] = Math.min(v, 86399);
   }
   sec = b.charCodeAt(1) * 3600 + b.charCodeAt(2) * 60 + b.charCodeAt(3);
   var md = b.charCodeAt(4);
-  if (md == 1 && sec > 0) { t.s = Math.min(sec, 86399); start(t); }
-  else if (md == 2 && P[0] > 0) { ivl(t); if (t !== T[cur]) mt = 0; }
+  if (md == 1 && sec > 0) { t.seconds = Math.min(sec, 86399); startTimer(t); }
+  else if (md == 2 && presets[0] > 0) { startInterval(t); if (t !== timers[current]) messageTicks = 0; }
   else md = 0;
-  if (md && ri == n) { stopRing(); nextRing(); }
-  if (md && t === T[cur]) ui = 0;
-  arm(); draw();
+  if (md && ringingIndex == n) { stopRing(); nextRing(); }
+  if (md && t === timers[current]) view = VIEW_TIMER;
+  armExpiryWake(); draw();
 }
-function lHold() {
-  if (ui == 0 && T[cur].st == 0) { ui = 2; pb = 0; }
-  else if (ui == 2) { P[pb] = T[cur].s; Ollee.beep(); }
-  else if (ui == 0 && fast(T[cur])) { rep = 2; addMin(T[cur]); }
+function onLHold() {
+  if (view == VIEW_TIMER && timers[current].state == IDLE) { view = VIEW_PRESETS; presetIndex = 0; }
+  else if (view == VIEW_PRESETS) { presets[presetIndex] = timers[current].seconds; Ollee.beep(); }
+  else if (view == VIEW_TIMER && isFastActive(timers[current])) { repeating = REPEAT_ADD; addMinute(timers[current]); }
 }
-function combo() { if (ui == 0) cur = (cur + 1) % 3; }
+function onCombo() { if (view == VIEW_TIMER) current = (current + 1) % 3; }
 
 // Expiry: a timer reaching zero is RUNG and joins the ring queue.
-function chk() {
-  for (var i = 0; i < 3; i++) if (T[i].st == 1 && now() >= T[i].e) expire(i);
+function checkExpiries() {
+  for (var i = 0; i < 3; i++) if (timers[i].state == RUNNING && now() >= timers[i].endsAt) expireTimer(i);
 }
-function expire(i) {
-  var t = T[i], stepped = false;
-  while (t.m == 2 && t.k < 9 && P[t.k + 1] > 0 && now() >= t.e) {
-    t.k++; t.e += P[t.k] * 1000; stepped = true;
+function expireTimer(i) {
+  var t = timers[i], stepped = false;
+  while (t.mode == INTERVAL && t.slot < 9 && presets[t.slot + 1] > 0 && now() >= t.endsAt) {
+    t.slot++; t.endsAt += presets[t.slot] * 1000; stepped = true;
   }
-  if (now() < t.e) { if (stepped) Ollee.beep(); return; }
-  T[i].st = 3;
-  if (Ollee.active()) { cur = i; ui = 0; rep = 0; }
-  ring(i);
+  if (now() < t.endsAt) { if (stepped) Ollee.beep(); return; }
+  timers[i].state = RUNG;
+  if (Ollee.active()) { current = i; view = VIEW_TIMER; repeating = REPEAT_NONE; }
+  queueRing(i);
 }
-function ring(i) {
-  rq.push(i);
-  if (ri < 0) nextRing();
+function queueRing(i) {
+  ringQueue.push(i);
+  if (ringingIndex < 0) nextRing();
 }
 function nextRing() {
-  if (rq.length === 0) { ri = -1; Ollee.led_off(); return; }
-  ri = rq.shift();
-  ron = Ollee.active() ? 1 : 0;
-  rn = ron ? 40 : 10;
-  bp();
+  if (ringQueue.length === 0) { ringingIndex = -1; Ollee.led_off(); return; }
+  ringingIndex = ringQueue.shift();
+  ringOnScreen = Ollee.active() ? 1 : 0;
+  beepsLeft = ringOnScreen ? 40 : 10;
+  ringStep();
 }
 // One beep per 500 ms: 40 beeps on screen (~20 s), 10 off screen (~5 s).
-function bp() {
-  rg = -1;
-  if (ri < 0) return;
+function ringStep() {
+  ringTimer = -1;
+  if (ringingIndex < 0) return;
   Ollee.beep();
-  if (rn % 2 === 0) Ollee.led_on(); else Ollee.led_off();
-  rn--;
-  if (rn > 0) rg = Ollee.setTimeout(bp, 500);
-  else { Ollee.led_off(); if (!ron) rq = []; nextRing(); }
+  if (beepsLeft % 2 === 0) Ollee.led_on(); else Ollee.led_off();
+  beepsLeft--;
+  if (beepsLeft > 0) ringTimer = Ollee.setTimeout(ringStep, 500);
+  else { Ollee.led_off(); if (!ringOnScreen) ringQueue = []; nextRing(); }
 }
 function stopRing() {
-  if (rg != -1) Ollee.clearTimeout(rg);
-  rg = -1; ri = -1;
+  if (ringTimer != -1) Ollee.clearTimeout(ringTimer);
+  ringTimer = -1; ringingIndex = -1;
   Ollee.led_off();
 }
 
 // Any press while ringing or rung silences it; the press is not a tap or hold.
-function ack() {
-  var was = ri;
-  cb = 1;
+function acknowledgeRing() {
+  var was = ringingIndex;
+  comboActive = 1;
   stopRing();
-  for (var i = 0; i < 3; i++) if (T[i].st == 3 && (i == cur || i == was)) clr(T[i]);
-  for (var j = 0; j < 3; j++) if (T[j].st == 3) { cur = j; break; }
+  for (var i = 0; i < 3; i++) if (timers[i].state == RUNG && (i == current || i == was)) clearTimer(timers[i]);
+  for (var j = 0; j < 3; j++) if (timers[j].state == RUNG) { current = j; break; }
   nextRing();
 }
 
 function button(b, e) {
   if (e == E_DOWN) {
-    if (Ollee.active() && (ri >= 0 || T[cur].st == 3)) ack();
-    dn[b] = 1;
-    if (dn[0] && dn[1] && !cb) { cb = 1; combo(); }
+    if (Ollee.active() && (ringingIndex >= 0 || timers[current].state == RUNG)) acknowledgeRing();
+    buttonDown[b] = 1;
+    if (buttonDown[0] && buttonDown[1] && !comboActive) { comboActive = 1; onCombo(); }
   } else {
-    dn[b] = 0;
-    rep = 0;
-    if (!cb && !lf) { if (b == B_A) aTap(); else lTap(); }
-    if (!dn[0] && !dn[1]) { cb = 0; lf = 0; }
+    buttonDown[b] = 0;
+    repeating = REPEAT_NONE;
+    if (!comboActive && !longFired) { if (b == B_A) onATap(); else onLTap(); }
+    if (!buttonDown[0] && !buttonDown[1]) { comboActive = 0; longFired = 0; }
   }
   draw();
 }
 
 function a_long() {
-  if (cb) return;
-  lf = 1;
-  aHold();
+  if (comboActive) return;
+  longFired = 1;
+  onAHold();
   draw();
 }
 
 function l_long() {
-  if (cb) return;
-  lf = 1;
-  lHold();
+  if (comboActive) return;
+  longFired = 1;
+  onLHold();
   draw();
 }

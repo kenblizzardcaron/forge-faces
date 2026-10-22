@@ -5,15 +5,24 @@ Custom watch faces for the [Ollee Watch](https://www.olleewatch.com), written fo
 
 | Face | What it does |
 | --- | --- |
-| [multitimer.js](multitimer.js) | Feature-parity replacement for the official TIMER face, with up to three timers running at once. |
+| [multitimer.js](multitimer.js) ([upload: multitimer.min.js](multitimer.min.js)) | Feature-parity replacement for the official TIMER face, with up to three timers running at once. |
 
 ## Try a face
 
 Forge is in Beta 1, so faces run in the emulator only; deploying to the watch arrives in Beta 2.
 
+Each face comes as readable source (`name.js`) and a minified build (`name.min.js`). Forge scripts must fit in 8158 bytes, so **load and upload the `.min.js`**; read the `.js`.
+
 1. Open the [Forge emulator](https://github.com/olleewatch/forge_emulator) (`index.html`).
-2. Paste the face into the editor, or use **Load file**.
-3. Click **Minify**, then **Run minified**. Faces here may exceed the 8158-byte limit until minified.
+2. **Load file** → `multitimer.min.js` (or paste it into the editor).
+3. Click **Run**.
+
+To rebuild a `.min.js` after editing the source (top-level names are shortened; the hook names the watch calls and `subscribe` are kept):
+
+```sh
+npx terser@5 multitimer.js --compress toplevel=false -o multitimer.min.js \
+  --mangle 'toplevel,reserved=[subscribe,init,enter,exit,a_short,a_long,l_short,l_long,tilt,tap,button,ble_rx,clock_minute,clock_hour]'
+```
 
 ## multitimer.js
 
