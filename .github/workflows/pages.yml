@@ -1,0 +1,41 @@
+# Publishes the Forge emulator to GitHub Pages: upstream (pinned submodule) + patches/*.patch.
+# The weekly run builds against upstream main instead; a patch that no longer applies fails the job
+# and the last good site stays up.
+name: Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * 1'
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Follow upstream main (scheduled runs)
+        if: github.event_name == 'schedule'
+        run: git submodule update --remote upstream
+      - name: Apply patches
+        run: tools/build-site.sh "$RUNNER_TEMP/site"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

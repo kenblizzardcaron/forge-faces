@@ -13,7 +13,7 @@ Forge is in Beta 1, so faces run in the emulator only; Ollee plans deploying to 
 
 Each face comes as readable source (`name.js`) and a minified build (`name.min.js`). Forge scripts must fit in 8158 bytes, so **load and upload a `.min.js`**; read the `.js`.
 
-1. Open the [Forge emulator](https://github.com/olleewatch/forge_emulator) (`index.html`).
+1. Open the [hosted emulator](https://kenblizzardcaron.github.io/forge-faces/), or a local copy of the [Forge emulator](https://github.com/olleewatch/forge_emulator) (`index.html`).
 2. **Load file** → for example `multitimer.min.js` (or paste it into the editor).
 3. Click **Run**.
 
@@ -72,6 +72,15 @@ Write to the Forge RX characteristic (`C6FB0002-A37D-40AC-89BE-887D25E1F5B3`). T
 
 Bytes 1–44 match the official Ollee app's `02 26` timer payload. Send it as three writes, each prefixed with a sequence byte: `[0] + bytes 0–18`, `[1] + bytes 19–37`, `[2] + bytes 38–44`. A write out of order discards the partial message.
 
+## Hosted emulator
+
+[kenblizzardcaron.github.io/forge-faces](https://kenblizzardcaron.github.io/forge-faces/) is Ollee's [Forge emulator](https://github.com/olleewatch/forge_emulator) with a few patches, and this repo's faces under [`faces/`](https://kenblizzardcaron.github.io/forge-faces/faces/).
+
+- `upstream/` is a submodule pinned to an upstream commit; `patches/*.patch` are applied on top, in order, by `tools/build-site.sh`.
+- [`0001-touch-support.patch`](patches/0001-touch-support.patch): press and hold the on-screen buttons on phones and tablets (upstream [PR #2](https://github.com/olleewatch/forge_emulator/pull/2)).
+- A weekly build runs against upstream `main`. If a patch stops applying, the build fails and the last good site stays up: rebase the patch, or delete it once upstream has the change.
+- To add a patch: edit in `upstream/`, then `git -C upstream diff > patches/000N-name.patch` and `git -C upstream checkout .`.
+
 ## License
 
-[GPL-3.0](LICENSE).
+The faces and tools here are [GPL-3.0](LICENSE). The emulator in `upstream/` and the patches to it are derived from Ollee's code, which carries no license; they are shared here in good faith.
