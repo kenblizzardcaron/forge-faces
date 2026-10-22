@@ -5,7 +5,7 @@ Custom watch faces for the [Ollee Watch](https://www.olleewatch.com), written fo
 
 | Face | What it does |
 | --- | --- |
-| [multitimer.js](multitimer.js) | Three countdown timers at once, with the official TIMER face's controls: presets, interval mode, fast mode. |
+| [multitimer.js](multitimer.js) | Feature-parity replacement for the official TIMER face, with up to three timers running at once. |
 
 ## Try a face
 
@@ -17,7 +17,11 @@ Forge is in Beta 1, so faces run in the emulator only; deploying to the watch ar
 
 ## multitimer.js
 
-Three independent timers (1–3, shown on the day digits). Long timers, such as an 18-hour fast, never block a quick oven timer.
+A feature-parity replacement for the official Ollee TIMER face that adds **simultaneous timers**: up to three countdowns run at once, each with the full TIMER feature set.
+
+- **Same as the official face:** edit to 23:59:59, start / pause / clear, 10 presets, interval mode, fast mode, and the same buttons for each.
+- **Added:** three independent timers (number shown on the day digits), switched with **A + L**; the face opens on whichever timer finishes next; presets can be saved from the watch.
+- **Different:** **LAP** stands in for the blinking bell, which Forge faces can't control; the weekday digits show the Forge slot name (`FA`–`FC`) instead of `TI`.
 
 | Button | Does |
 | --- | --- |
