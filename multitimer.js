@@ -22,9 +22,9 @@ var CUE_FROM_S = 5;
 function newTimer() { return { seconds: 0, state: IDLE, endsAt: 0, pausedMs: 0, mode: NORMAL, slot: 0, cue: CUE_FROM_S + 1 }; }
 var presets = [60, 180, 300, 600, 900, 1500, 1800, 2700, 3600, 64800];
 var timers = [newTimer(), newTimer(), newTimer()];
-var current = 0, view = VIEW_TIMER, editField = 0, presetIndex = 0, repeating = REPEAT_NONE, messageTicks = 0;
+var current = 0, view = VIEW_TIMER, editField = 0, presetIndex = 0, repeating = REPEAT_NONE, messageUntil = 0;
 var buttonDown = [0, 0], longFired = 0, comboActive = 0;
-var tickTimer = -1, ringTimer = -1, expiryTimer = -1;
+var tickTimer = -1, tickMs = 0, ringTimer = -1, expiryTimer = -1;
 var ringQueue = [], ringingIndex = -1, ringIsTriple = false, ringStepMs = PING_STEP_MS, ringStepsDone = 0, ringStepsTotal = 0, ringOnScreen = false;
 var bleBuffer = '', bleNextSeq = 0;  // BLE reassembly: bytes so far, next expected seq
 
@@ -43,9 +43,10 @@ function remainingMs(t) {
 function draw() {
   if (!Ollee.active()) return;
   var blinkOn = Math.floor(now() / 500) % 2 == 0;
+  var message = now() < messageUntil;
   var t = timers[current];
   var main, corner;
-  if (messageTicks > 0) main = 'InTEr';
+  if (message) main = 'InTEr';
   else if (view == VIEW_PRESETS) main = formatHMS(presets[presetIndex]);
   else if (view == VIEW_EDIT) {
     main = formatHMS(t.seconds);
@@ -53,7 +54,7 @@ function draw() {
   } else if (t.state == RUNG) main = blinkOn ? '000000' : '      ';
   else main = formatHMS(Math.ceil(remainingMs(t) / 1000));
   Ollee.drawMain(main);
-  Ollee.drawColon(messageTicks == 0);
+  Ollee.drawColon(!message);
 
   if (view == VIEW_PRESETS) corner = slotGlyph(presetIndex);
   else if (t.mode == INTERVAL && (t.state == RUNNING || t.state == PAUSED)) corner = slotGlyph(t.slot);
@@ -61,29 +62,56 @@ function draw() {
   else corner = ' ';
   Ollee.drawDay(String(current + 1) + corner);
 
-  Ollee.drawLap(view === VIEW_TIMER && messageTicks == 0 && (t.state == RUNNING || t.state == ARMED) && blinkOn);
+  Ollee.drawLap(view === VIEW_TIMER && !message && (t.state == RUNNING || t.state == ARMED) && blinkOn);
   var pm = false;
   for (var j = 0; j < 3; j++) if (j != current && (timers[j].state == RUNNING || timers[j].state == ARMED)) pm = true;
   Ollee.drawPM(pm);
 }
 
 function tick() {
-  if (messageTicks > 0) messageTicks--;
   if (repeating == REPEAT_EDIT && view == VIEW_EDIT && buttonDown[0]) incrementField();
   // Guarded by !comboActive: an A+L combo can switch current mid-hold onto another fast timer.
   if (repeating == REPEAT_ADD && buttonDown[1] && !comboActive && isFastActive(timers[current])) addMinute(timers[current]);
-  checkDue();
+  if (checkDue()) armExpiryWake();
+  updateSubscriptions();
   draw();
+  updateTick();
 }
 
-function init() { Ollee.subscribe(E_CLOCK_MINUTE + E_BLE_RX); }
+// Tick rate: 250 ms while a key repeats, 500 ms while something changes on screen, else off.
+function updateTick() {
+  var wanted = 0;
+  if (Ollee.active()) {
+    if (repeating != REPEAT_NONE) wanted = 250;
+    else if (now() < messageUntil || view == VIEW_EDIT || anyTimerLive()) wanted = 500;
+  }
+  if (wanted == tickMs) return;
+  if (tickTimer != -1) Ollee.clearInterval(tickTimer);
+  tickTimer = wanted > 0 ? Ollee.setInterval(tick, wanted) : -1;
+  tickMs = wanted;
+}
+function anyTimerLive() {
+  for (var i = 0; i < 3; i++) if (timers[i].state == RUNNING || timers[i].state == ARMED || timers[i].state == RUNG) return true;
+  return false;
+}
+
+function init() { Ollee.subscribe(E_BLE_RX); }
+
+// The minute clock is only needed while a timer runs: ARMED waits at zero and RUNG needs no wake.
+function updateSubscriptions() {
+  var anyRunning = false;
+  for (var i = 0; i < 3; i++) if (timers[i].state == RUNNING) anyRunning = true;
+  if (anyRunning) Ollee.subscribe(E_CLOCK_MINUTE); else Ollee.unsubscribe(E_CLOCK_MINUTE);
+}
 
 function enter() {
   Ollee.clear();
-  tickTimer = Ollee.setInterval(tick, 250);
+  tickTimer = -1; tickMs = 0;
   view = VIEW_TIMER; repeating = REPEAT_NONE; buttonDown = [0, 0]; comboActive = 0; longFired = 0;
   pickTimerToShow();
   draw();
+  armExpiryWake();
+  updateTick();
 }
 
 // Shows the rung timer, else the running timer ending soonest, else keeps current.
@@ -95,11 +123,11 @@ function pickTimerToShow() {
 }
 
 // Runs on and off screen: rings anything due, then arms a one-shot if an expiry is near.
-function clock_minute() { checkDue(); armExpiryWake(); }
+function clock_minute() { checkDue(); armExpiryWake(); updateSubscriptions(); }
 
-// Off screen the 250 ms tick is gone, so a one-shot wakes the face at the next expiry or cue within a minute.
+// A one-shot wakes the face at the next expiry or cue within a minute, on screen or off.
+// The minute clock re-arms it while a timer runs, so a long timer needs no tick.
 function armExpiryWake() {
-  if (Ollee.active()) return;
   if (expiryTimer != -1) Ollee.clearTimeout(expiryTimer);
   expiryTimer = -1;
   var d = 60001, x;  // sentinel: nothing due within a minute
@@ -107,7 +135,7 @@ function armExpiryWake() {
     x = timers[i].endsAt - now(); if (x < d) d = x;
     x = nextCueAt(timers[i]) - now(); if (x < d) d = x;
   }
-  if (d <= 60000) expiryTimer = Ollee.setTimeout(function () { expiryTimer = -1; checkDue(); armExpiryWake(); }, Math.max(d, 1));
+  if (d <= 60000) expiryTimer = Ollee.setTimeout(function () { expiryTimer = -1; checkDue(); updateSubscriptions(); updateTick(); armExpiryWake(); draw(); }, Math.max(d, 1));
 }
 
 function exit() {
@@ -116,7 +144,8 @@ function exit() {
   ringQueue = [];
   if (tickTimer != -1) Ollee.clearInterval(tickTimer);
   if (expiryTimer != -1) Ollee.clearTimeout(expiryTimer);
-  tickTimer = expiryTimer = -1;
+  tickTimer = expiryTimer = -1; tickMs = 0;
+  updateSubscriptions();
   Ollee.led_off();
 }
 
@@ -163,7 +192,7 @@ function onAHold() {
   else if (view == VIEW_TIMER && timers[current].state == IDLE && presets[0] > 0) startInterval(timers[current]);
 }
 // Interval: runs preset slots 1..10 in turn; the zero slot ends the run.
-function startInterval(t) { t.mode = INTERVAL; t.slot = 0; t.state = RUNNING; t.endsAt = now() + presets[0] * 1000; t.cue = CUE_FROM_S + 1; messageTicks = 4; }
+function startInterval(t) { t.mode = INTERVAL; t.slot = 0; t.state = RUNNING; t.endsAt = now() + presets[0] * 1000; t.cue = CUE_FROM_S + 1; messageUntil = now() + 1000; }
 
 // Bluetooth: a 45-byte message comes as 3 writes, each [seq] + data. Bad order resets.
 function ble_rx(d) {
@@ -195,11 +224,11 @@ function applyBleMessage(b) {
   sec = b.charCodeAt(1) * 3600 + b.charCodeAt(2) * 60 + b.charCodeAt(3);
   var md = b.charCodeAt(4);
   if (md == 1 && sec > 0) { t.seconds = Math.min(sec, 86399); startTimer(t); }
-  else if (md == 2 && presets[0] > 0) { startInterval(t); if (t !== timers[current]) messageTicks = 0; }
+  else if (md == 2 && presets[0] > 0) { startInterval(t); if (t !== timers[current]) messageUntil = 0; }
   else md = 0;
   if (md && ringingIndex == n) { stopRing(); nextRing(); }
   if (md && t === timers[current]) view = VIEW_TIMER;
-  armExpiryWake(); draw();
+  armExpiryWake(); updateSubscriptions(); draw(); updateTick();
 }
 function onLHold() {
   if (view == VIEW_TIMER && timers[current].state == IDLE) { view = VIEW_PRESETS; presetIndex = 0; }
@@ -210,19 +239,24 @@ function onCombo() { if (view == VIEW_TIMER) current = (current + 1) % 3; }
 
 // Expiry: a timer reaching zero is RUNG and joins the ring queue.
 function checkExpiries() {
-  for (var i = 0; i < 3; i++) if (timers[i].state == RUNNING && now() >= timers[i].endsAt) expireTimer(i);
+  var changed = false;
+  for (var i = 0; i < 3; i++) if (timers[i].state == RUNNING && now() >= timers[i].endsAt) { expireTimer(i); changed = true; }
+  return changed;
 }
-function checkDue() { checkExpiries(); checkCues(); }
+// Returns true if anything expired or a cue beeped, so the next one-shot is re-armed.
+function checkDue() { var expired = checkExpiries(); return checkCues() || expired; }
 
 // Countdown: beeps once when a running timer first reaches each whole second from 5 down to 1.
 function checkCues() {
-  if (beepStyle != COUNTDOWN) return;
+  if (beepStyle != COUNTDOWN) return false;
+  var changed = false;
   for (var i = 0; i < 3; i++) {
     var t = timers[i], s;
     if (t.state != RUNNING) continue;
     s = Math.ceil(remainingMs(t) / 1000);
-    if (s >= 1 && s < t.cue) { t.cue = s; Ollee.beep(); }
+    if (s >= 1 && s < t.cue) { t.cue = s; Ollee.beep(); changed = true; }
   }
+  return changed;
 }
 // Clock time of a running countdown timer's next cue, or Infinity when none is left this slot.
 function nextCueAt(t) {
@@ -299,6 +333,7 @@ function acknowledgeRing() {
   for (var i = 0; i < 3; i++) if (timers[i].state == RUNG && (i == current || i == was)) clearTimer(timers[i]);
   for (var j = 0; j < 3; j++) if (timers[j].state == RUNG) { current = j; break; }
   nextRing();
+  updateTick();
 }
 
 function button(b, e) {
@@ -312,19 +347,28 @@ function button(b, e) {
     if (!comboActive && !longFired) { if (b == B_A) onATap(); else onLTap(); }
     if (!buttonDown[0] && !buttonDown[1]) { comboActive = 0; longFired = 0; }
   }
+  armExpiryWake();
+  updateSubscriptions();
   draw();
+  updateTick();
 }
 
 function a_long() {
   if (comboActive) return;
   longFired = 1;
   onAHold();
+  armExpiryWake();
+  updateSubscriptions();
   draw();
+  updateTick();
 }
 
 function l_long() {
   if (comboActive) return;
   longFired = 1;
   onLHold();
+  armExpiryWake();
+  updateSubscriptions();
   draw();
+  updateTick();
 }
