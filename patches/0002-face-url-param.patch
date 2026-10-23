@@ -1,22 +1,23 @@
-From 1e168b81a02b5230bcb728178e91c2960ddc8519 Mon Sep 17 00:00:00 2001
+From 86dac67c3cff90a3b324617e852db96d356c89fd Mon Sep 17 00:00:00 2001
 From: Ken Blizzard-Caron <ken@blizzardcaron.com>
 Date: Thu, 22 Oct 2026 22:37:18 -0600
 Subject: [PATCH] Preload a face from the URL: ?face=<name> loads
- faces/<name>.min.js
+ faces/<name>.js
 
-Names are limited to [A-Za-z0-9_-] and resolve only under faces/; an unknown
-name logs the fetch error and falls back to the template.
+Its prebuilt faces/<name>.min.js goes in the minified tab untouched; the in-page
+minifier never renames, so regenerating it would undo the build. Names are
+limited to [A-Za-z0-9_-]; an unknown face logs the error and loads the template.
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---
- js/app.js | 30 +++++++++++++++++++++++-------
- 1 file changed, 23 insertions(+), 7 deletions(-)
+ js/app.js | 34 +++++++++++++++++++++++++++-------
+ 1 file changed, 27 insertions(+), 7 deletions(-)
 
 diff --git a/js/app.js b/js/app.js
-index 61bd17b..fdd3a8a 100644
+index 61bd17b..38ad568 100644
 --- a/js/app.js
 +++ b/js/app.js
-@@ -333,21 +333,37 @@ function a_short() {
+@@ -333,21 +333,41 @@ function a_short() {
  }
  `;
  
@@ -48,12 +49,16 @@ index 61bd17b..fdd3a8a 100644
 +    .catch(() => loadDefaultExample(DEFAULT_EXAMPLE_FALLBACK));
 +}
 +
-+// ?face=<name> preloads faces/<name>.min.js (the build you upload) in place of the template.
++// ?face=<name> preloads faces/<name>.js and puts its prebuilt faces/<name>.min.js in the
++// minified tab as-is: the in-page minifier never renames, so regenerating it would undo the build.
 +const faceParam = new URLSearchParams(location.search).get('face');
 +if (faceParam && /^[\w-]+$/.test(faceParam)) {
-+  const faceFile = `${faceParam}.min.js`;
-+  fetchText(`faces/${faceFile}`)
-+    .then((text) => loadDefaultExample(text, faceFile))
++  Promise.all([fetchText(`faces/${faceParam}.js`), fetchText(`faces/${faceParam}.min.js`)])
++    .then(([source, built]) => {
++      loadDefaultExample(source, `${faceParam}.js`);
++      editorMinified.value = built;
++      minifiedSourceSnapshot = source;
++    })
 +    .catch((e) => { logError(`Couldn't load face "${faceParam}": ${e.message}`); loadTemplate(); });
 +} else {
 +  loadTemplate();

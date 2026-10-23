@@ -78,7 +78,7 @@ Bytes 1–44 match the official Ollee app's `02 26` timer payload. Send it as th
 
 - `upstream/` is a submodule pinned to an upstream commit; `patches/*.patch` are applied on top, in order, by `tools/build-site.sh`.
 - [`0001-touch-support.patch`](patches/0001-touch-support.patch): press and hold the on-screen buttons on phones and tablets (upstream [PR #2](https://github.com/olleewatch/forge_emulator/pull/2)).
-- [`0002-face-url-param.patch`](patches/0002-face-url-param.patch): `?face=<name>` preloads `faces/<name>.min.js`, e.g. [`?face=multitimer`](https://kenblizzardcaron.github.io/forge-faces/?face=multitimer).
+- [`0002-face-url-param.patch`](patches/0002-face-url-param.patch): `?face=<name>` preloads `faces/<name>.js`, with its prebuilt `.min.js` in the minified tab, e.g. [`?face=multitimer`](https://kenblizzardcaron.github.io/forge-faces/?face=multitimer).
 - A weekly build runs against upstream `main`. If a patch stops applying, the build fails and the last good site stays up: rebase the patch, or delete it once upstream has the change.
 - To add a patch: edit in `upstream/`, then `git -C upstream diff > patches/000N-name.patch` and `git -C upstream checkout .`.
 
