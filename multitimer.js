@@ -254,7 +254,7 @@ function checkCues() {
     var t = timers[i], s;
     if (t.state != RUNNING) continue;
     s = Math.ceil(remainingMs(t) / 1000);
-    if (s >= 1 && s < t.cue) { t.cue = s; Ollee.beep(); changed = true; }
+    if (s >= 1 && s < t.cue) { t.cue = s; Ollee.beepShort(); changed = true; }
   }
   return changed;
 }
@@ -269,7 +269,7 @@ function expireTimer(i) {
     t.slot++; t.endsAt += presets[t.slot] * 1000; t.cue = CUE_FROM_S + 1; stepped = true;
   }
   if (now() < t.endsAt) {
-    if (stepped) { if (beepStyle == PING) Ollee.beep(); else queueRing(i, true); }
+    if (stepped) { if (beepStyle == PING) Ollee.beepShort(); else queueRing(i, true); }
     return;
   }
   timers[i].state = RUNG;
@@ -302,14 +302,14 @@ function ringStepsFor(entry) {
   }
   return ringOnScreen ? PING_BEEPS_ON_SCREEN : PING_BEEPS_OFF_SCREEN;
 }
-// Triple steps are ringStepMs apart; ping beeps are PING_STEP_MS apart and the LED alternates.
+// Triple steps are ringStepMs apart; ping beeps (beepShort) are PING_STEP_MS apart and the LED alternates.
 function ringStep() {
   ringTimer = -1;
   if (ringingIndex < 0) return;
   var stepInPeriod = ringIsTriple ? ringStepsDone % STEPS_PER_PERIOD : ringStepsDone % 2;
   var beeps = !ringIsTriple || stepInPeriod < BEEPS_PER_TRIPLE;
   var ledOn = ringIsTriple ? stepInPeriod < LED_STEPS : stepInPeriod === 0;
-  if (beeps) Ollee.beep();
+  if (beeps) { if (ringIsTriple) Ollee.beep(); else Ollee.beepShort(); }
   if (ledOn) Ollee.led_on(); else Ollee.led_off();
   ringStepsDone++;
   if (ringStepsDone === ringStepsTotal) {

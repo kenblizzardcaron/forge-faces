@@ -34,8 +34,8 @@ Three ways to beep, chosen over Bluetooth (see [below](#bluetooth-messages)); th
 | Style | Interval change | Timer end / end of interval set |
 | --- | --- | --- |
 | **stock** (`S0`) | Like the official face: *beepbeepbeep* every second for 10 s while the next interval runs; any button silences it | The same triple pattern for up to 20 s, until a button |
-| **ping** (`S1`) | One short beep | A beep every half second for up to 20 s, until a button |
-| **countdown** (`S2`) | A beep at 5, 4, 3, 2 and 1 s left in every interval, then *beepbeepbeep* | The same countdown, then the half-second ring |
+| **ping** (`S1`) | One short high beep (`beepShort`) | A short high beep every half second for up to 20 s, until a button |
+| **countdown** (`S2`) | A short high beep at 5, 4, 3, 2 and 1 s left in every interval, then *beepbeepbeep* | The same countdown, then the half-second ring |
 
 On another face, beeping you can't stop is capped at 5 s in every style.
 
