@@ -37,7 +37,7 @@ Three ways to beep, chosen over Bluetooth (see [below](#bluetooth-messages)); th
 | **ping** (`S1`) | One short high beep (`beepShort`) | A short high beep every half second for up to 20 s, until a button |
 | **countdown** (`S2`) | A short high beep at 5, 4, 3, 2 and 1 s left in every interval, then *beepbeepbeep* | The same countdown, then the half-second ring |
 
-On another face, beeping you can't stop is capped at 5 s in every style.
+On another face, beeping you can't stop is capped at 5 s in every style, and the second-by-second cues (the stock triple pattern, ping's interval beep, the countdown) only play while the face is on screen (see [Off screen](#off-screen)).
 
 ### Buttons
 
@@ -54,6 +54,15 @@ On another face, beeping you can't stop is capped at 5 s in every style.
 - A timer finishing on screen beeps for up to 20 s; any button stops it. On another face it beeps for at most 5 s, then the face opens on that timer next time.
 - Presets, the beep style and running timers reset when the watch reboots (Forge has no storage yet).
 - A phone can set the beep style, replace the presets or start a timer over the Forge Bluetooth service (formats below).
+
+### Off screen
+
+multitimer runs best in the foreground. Forge cancels a face's timers when it leaves the screen, and the only clock event that reaches a face in the background is the once-a-minute tick.
+
+- Running timers keep counting from timestamps, so they show the right time when you come back.
+- A timer that ends while you're on another face is caught at the next minute tick, so it can ring up to 59 s late.
+- Timers that end exactly on a minute ring on time, so for background use set whole-minute timers and start them as the minute turns over.
+- The emulator still fires timers off screen, so it rings on time there; expect the watch to behave as above.
 
 ### Bluetooth messages
 
