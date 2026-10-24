@@ -6,6 +6,10 @@ var settings = { total: 100, length: 600, sets: 5, pace: 3 };
 var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3;
 var state = IDLE, startAt = 0, paused = false, pausedAt = 0, current = null, lastPhase = -1, message = '', messageUntil = 0;
 var displayTimer = -1, longFired = 0;
+// Edit: L cycles fields; A steps the current one, and holding A repeats every 100 ms on its own slot.
+var FIELDS = ['total', 'length', 'sets', 'pace'], WORDS = ['Count', 'LEngth', 'SEtS', 'PACE'];
+var LIMITS = [[1, 999, 1], [15, 5985, 15], [1, 9, 1], [1, 20, 1]];
+var field = 0, repeatTimer = -1;
 // Finish ring: stock triple, 125 ms steps, beeping on steps 0-2 of each 8; own timer slot.
 var RING_STEP_MS = 125, ringTimer = -1, ringStepNo = 0, ringSteps = 0, cue = 6;
 
@@ -59,6 +63,11 @@ function draw() {
     day = p ? 'S1' : 'Er';
     main = fmtTime(settings.length) + (p ? fmtReps(p.reps[0]) : '  ');
     colon = true;
+  } else if (state == EDIT) {
+    var q = plan(settings.total, settings.length, settings.sets, settings.pace);
+    day = q ? fmtReps(q.reps[0]) : 'Er';
+    main = field == 1 ? fmtTime(settings.length) + '  ' : ('      ' + settings[FIELDS[field]]).slice(-6);
+    colon = field == 1;
   } else if (state == RUNNING && elapsed() < 0) {
     var s = Math.ceil(-elapsed() / 1000);
     day = 'GO';
@@ -112,21 +121,39 @@ function enter() {
   draw();
 }
 // The platform cancels timers when the face leaves the screen.
-function exit() { displayTimer = -1; ringTimer = -1; }
+function exit() { displayTimer = -1; ringTimer = -1; repeatTimer = -1; }
 
 // Pausing freezes elapsed(); resuming moves startAt so the clock picks up where it stopped.
 function pause() { paused = true; pausedAt = now(); flash('PAUSE'); }
 function resume() { startAt += now() - pausedAt; paused = false; messageUntil = 0; }
 function reset() { paused = false; state = IDLE; flash('rESEt'); }
 
-function a_long() { longFired = 1; }
+// Steps the current field by its increment, wrapping to the minimum past the maximum.
+function bump() {
+  var lim = LIMITS[field], v = settings[FIELDS[field]] + lim[2];
+  settings[FIELDS[field]] = v > lim[1] ? lim[0] : v;
+}
+function repeatStep() { bump(); draw(); }
+function stopRepeat() {
+  if (repeatTimer != -1) Ollee.clearInterval(repeatTimer);
+  repeatTimer = -1;
+}
+// A long press in EDIT starts hold-to-repeat; the A release stops it and adds no tap step.
+function a_long() {
+  longFired = 1;
+  if (state == EDIT && repeatTimer == -1) repeatTimer = Ollee.setInterval(repeatStep, 100);
+}
 // Any press silences a ringing finish. Acts on release unless the long press fired; in DONE any button returns to IDLE.
 function button(b, e) {
   if (ringTimer != -1) stopRing();
   if (e != E_UP) return;
+  if (b == B_A) stopRepeat();
   if (!longFired) {
     if (state == DONE) state = IDLE;
     else if (state == IDLE && b == B_A) start();
+    else if (state == IDLE && b == B_L) { state = EDIT; field = 0; flash(WORDS[0]); }
+    else if (state == EDIT && b == B_A) bump();
+    else if (state == EDIT && b == B_L) { if (++field == FIELDS.length) { field = 0; state = IDLE; } else flash(WORDS[field]); }
     else if (state == RUNNING && b == B_A) { if (paused) resume(); else pause(); }
     else if (state == RUNNING && paused && b == B_L) reset();
   }
