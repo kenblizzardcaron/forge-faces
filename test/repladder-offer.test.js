@@ -96,3 +96,17 @@ test('offer off screen', () => {
   w.tap('A');
   assert.equal(w.ctx.settings.level, 26);
 });
+
+test('overlapping presses during the ring', () => {
+  const w = fresh();
+  w.tap('A');
+  w.at(601100);
+  w.ctx.button(0, 0);
+  w.ctx.button(1, 0);
+  w.ctx.button(0, 1);
+  assert.equal(w.ctx.settings.level, 25);
+  assert.equal(w.ctx.state, 4);
+  w.ctx.button(1, 1);
+  assert.equal(w.ctx.state, 0);
+  assert.equal(w.ctx.settings.level, 25);
+});

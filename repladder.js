@@ -197,12 +197,15 @@ function a_long() {
   if (state == EDIT && repeatTimer == -1) repeatTimer = Ollee.setInterval(repeatStep, 100);
 }
 // Any press silences a ringing finish. Acts on release unless the long press fired; in DONE any button returns to IDLE.
-// A press that silences an OFFER ring is hushed: its release only clears the hush, so the offer is not answered.
+// A press that silences an OFFER ring is hushed per button: its release only clears that bit, so the offer is not answered.
 function button(b, e) {
-  if (e != E_UP) hush = state == OFFER && ringTimer != -1 ? 1 : 0;
+  if (e != E_UP) {
+    hush &= ~(1 << b);
+    if (state == OFFER && ringTimer != -1) hush |= 1 << b;
+  }
   if (ringTimer != -1) stopRing();
   if (e != E_UP) return;
-  if (hush) { hush = 0; longFired = 0; draw(); return; }
+  if (hush & (1 << b)) { hush &= ~(1 << b); if (b == B_A) longFired = 0; draw(); return; }
   if (b == B_A) stopRepeat();
   // longFired is only set by A, so an L release while A is held is not swallowed.
   var longPress = b == B_A && longFired;
