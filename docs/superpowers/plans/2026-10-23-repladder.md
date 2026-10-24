@@ -12,7 +12,7 @@
 
 ## Delegation
 
-Every task 1–7 is a mechanical unit for a **`model: haiku` subagent** on branch `repladder`. Its gate is `node --test test/` (Task 7 adds `node build.js`). The controller (Opus) runs the gate, reads the diff, and does Task 8 (the visual check in the emulator) itself. A subagent's report is a claim, and the gate plus `git diff` are the evidence.
+Every task 1–7 is a mechanical unit for a **`model: haiku` subagent** on branch `repladder`. Its gate is `node --test` (Task 7 adds `node build.js`). The controller (Opus) runs the gate, reads the diff, and does Task 8 (the visual check in the emulator) itself. A subagent's report is a claim, and the gate plus `git diff` are the evidence.
 
 ## Global Constraints
 
@@ -68,14 +68,14 @@ Every task 1–7 is a mechanical unit for a **`model: haiku` subagent** on branc
 
 - [ ] **Step 2: Run them to make sure they fail**
 
-Run: `node --test test/`
+Run: `node --test`
 Expected: FAIL, "Cannot find module '../tools/harness'".
 
 - [ ] **Step 3: Implement `tools/harness.js`**, a CommonJS module exporting `{ loadFace, loadSource }`. Use the event constants from `upstream/js/ollee.js` (`E_A_SHORT = 1<<0` … `E_CLOCK_HOUR = 1<<9`, `B_A = 0`, `B_L = 1`, `E_DOWN = 0`, `E_UP = 1`). Inject them, plus `Ollee`, a fake `Date` (`new Date().getTime()` and `Date.now()` return the fake clock) and `console`, as context globals. Run the code with `vm.runInContext`, then call the hooks by name from the context. A top-level `const subscribe` is not a context property, so read it with `vm.runInContext('subscribe', ctx)`. Button dispatch mirrors `upstream/js/app.js` `createHoldableButton`: on DOWN the short hook fires, then `button(btn, E_DOWN, ms)`; a hold reaching 1000 ms (A) or 1500 ms (L) fires the long hook once; on release, `button(btn, E_UP, ms)`. `hold` advances the clock (firing timers) while the button is held. `Ollee` also needs `active()`, `clear()`, `drawHR`, `drawPM`, `drawBell`, `led_on/led_off`, `subscribe/unsubscribe` (return `true` for background bits only), `setInterval/clearInterval`. `clearTimeout()` with no id clears all.
 
 - [ ] **Step 4: Run the tests to make sure they pass**
 
-Run: `node --test test/`
+Run: `node --test`
 Expected: PASS, all 8 tests.
 
 - [ ] **Step 5: Commit**
@@ -134,7 +134,7 @@ Split these into named `test(...)` blocks: `default ladder`, `uneven split`, `fr
 
 - [ ] **Step 2: Run them to make sure they fail**
 
-Run: `node --test test/`
+Run: `node --test`
 Expected: FAIL, repladder.js not found or `plan` is not a function.
 
 - [ ] **Step 3: Implement `plan` and `phaseAt`**
@@ -143,7 +143,7 @@ Rep split: `b = floor((T + n(n-1)/2) / n)`, `r = T - (n*b - n(n-1)/2)`, rep `k` 
 
 - [ ] **Step 4: Run the tests to make sure they pass**
 
-Run: `node --test test/`
+Run: `node --test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -198,14 +198,14 @@ git commit -m "repladder: session math (rep split and phase ends)"
 
 - [ ] **Step 2: Run them to make sure they fail**
 
-Run: `node --test test/`
+Run: `node --test`
 Expected: FAIL on `idle screen` (nothing drawn yet).
 
 - [ ] **Step 3: Implement** the state, `elapsed`, `flash`, `draw`, `schedule` and `onPhase` hook point, and the A/L handling above in `button(b, e)`. Act on `E_UP` unless a long press fired, as multitimer does. `enter()` clears and draws; `exit()` clears the display timer id.
 
 - [ ] **Step 4: Run the tests to make sure they pass**
 
-Run: `node --test test/`
+Run: `node --test`
 Expected: PASS (all earlier tests too).
 
 - [ ] **Step 5: Commit**
@@ -240,14 +240,14 @@ git commit -m "repladder: run a session with lead-in, sets, rests and done scree
 
 - [ ] **Step 2: Run them to make sure they fail**
 
-Run: `node --test test/`
+Run: `node --test`
 Expected: FAIL on `lead-in shorts`.
 
 - [ ] **Step 3: Implement** the sounds in `onPhase` and the lead-in seconds (fold the lead-in cue times into `schedule()`), plus `startRing`/`stopRing` with their own `setTimeout` slot.
 
 - [ ] **Step 4: Run the tests to make sure they pass**
 
-Run: `node --test test/`
+Run: `node --test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -276,14 +276,14 @@ git commit -m "repladder: lead-in countdown, change beeps and finish triple"
 
 - [ ] **Step 2: Run them to make sure they fail**
 
-Run: `node --test test/`
+Run: `node --test`
 Expected: FAIL on `pause in lead-in`.
 
 - [ ] **Step 3: Implement** pause/resume/reset. `schedule()` arms nothing but the flash while paused.
 
 - [ ] **Step 4: Run the tests to make sure they pass**
 
-Run: `node --test test/`
+Run: `node --test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -315,14 +315,14 @@ git commit -m "repladder: pause, resume and reset"
 
 - [ ] **Step 2: Run them to make sure they fail**
 
-Run: `node --test test/`
+Run: `node --test`
 Expected: FAIL on `walk the fields`.
 
 - [ ] **Step 3: Implement** EDIT handling in `button`/`a_long`, plus the edit display in `draw()`. Hold-repeat may use a second `setTimeout`/`setInterval` slot, but the total must stay ≤ 4 slots (display, ring, repeat).
 
 - [ ] **Step 4: Run the tests to make sure they pass**
 
-Run: `node --test test/`
+Run: `node --test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -351,14 +351,14 @@ git commit -m "repladder: edit count, length, sets and pace on the watch"
 
 - [ ] **Step 2: Run them to make sure they fail**
 
-Run: `node --test test/`
+Run: `node --test`
 Expected: FAIL on `subscription`.
 
 - [ ] **Step 3: Implement** `catchUp`, `clock_minute`, `init` (if needed) and the subscription updates.
 
 - [ ] **Step 4: Run the tests to make sure they pass**
 
-Run: `node --test test/`
+Run: `node --test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -381,7 +381,7 @@ git commit -m "repladder: keep time off screen, catch up at the minute tick"
 
 - [ ] **Step 2: Run it to make sure it fails**
 
-Run: `node --test test/`
+Run: `node --test`
 Expected: FAIL, repladder.min.js not found.
 
 - [ ] **Step 3: Generalize `build.js`, then build.** Update its header comment. Run `npm install --no-save terser@5` if `node_modules/terser` is missing.
@@ -389,11 +389,11 @@ Expected: FAIL, repladder.min.js not found.
 Run: `node build.js && git diff --exit-code multitimer.min.js`
 Expected: `multitimer: … bytes`, `repladder: N bytes` with N ≤ 8158, exit 0, and multitimer.min.js unchanged.
 
-- [ ] **Step 4: README.** Add a row to the face table for `repladder.js` (upload `repladder.min.js`): "Declining-rep workout timer: N reps in S sets over a set time, one fewer rep each set." Add a `## repladder.js` section with short tables for the settings (defaults and ranges), buttons, screen (from the Task 3 display table) and sounds, plus the off-screen caveat (catches up at the minute tick). Mention `node --test test/` next to the rebuild line, and change that line's `multitimer` mention to cover both faces.
+- [ ] **Step 4: README.** Add a row to the face table for `repladder.js` (upload `repladder.min.js`): "Declining-rep workout timer: N reps in S sets over a set time, one fewer rep each set." Add a `## repladder.js` section with short tables for the settings (defaults and ranges), buttons, screen (from the Task 3 display table) and sounds, plus the off-screen caveat (catches up at the minute tick). Mention `node --test` next to the rebuild line, and change that line's `multitimer` mention to cover both faces.
 
 - [ ] **Step 5: Run all gates**
 
-Run: `node --test test/ && node build.js && git diff --exit-code multitimer.min.js`
+Run: `node --test && node build.js && git diff --exit-code multitimer.min.js`
 Expected: all pass, exit 0.
 
 - [ ] **Step 6: Commit**
