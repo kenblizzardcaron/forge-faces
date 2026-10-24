@@ -6,6 +6,7 @@ Custom watch faces for the [Ollee Watch](https://www.olleewatch.com), written fo
 | Face | What it does |
 | --- | --- |
 | [multitimer.js](multitimer.js) (upload [multitimer.min.js](multitimer.min.js)) | Feature-parity replacement for the official TIMER face, with up to three timers running at once. |
+| [repladder.js](repladder.js) (upload [repladder.min.js](repladder.min.js)) | Declining-rep workout timer: 100 reps in 5 sets over a set time, one fewer rep each set. |
 
 ## Try a face
 
@@ -17,7 +18,7 @@ Each face comes as readable source (`name.js`) and a minified build (`name.min.j
 2. **Load file** → for example `multitimer.min.js` (or paste it into the editor).
 3. Click **Run**.
 
-To rebuild after editing the source: `npm install terser@5 && node build.js`. Top-level names are shortened; the hook names the watch calls and `subscribe` are kept.
+To rebuild both faces after editing their source: `npm install terser@5 && node build.js`; run the tests with `node --test`. Top-level names are shortened; the hook names the watch calls and `subscribe` are kept.
 
 ## multitimer.js
 
@@ -81,13 +82,65 @@ Write to the Forge RX characteristic (`C6FB0002-A37D-40AC-89BE-887D25E1F5B3`). T
 
 Bytes 1–44 match the official Ollee app's `02 26` timer payload. Send it as three writes, each prefixed with a sequence byte: `[0] + bytes 0–18`, `[1] + bytes 19–37`, `[2] + bytes 38–44`. A write out of order discards the partial message.
 
+## repladder.js
+
+A declining-rep workout timer: a total number of reps is split across sets, one fewer rep each set, with rest between sets.
+
+### Settings
+
+Edit with **L** in idle, in this order. **A** raises the value (hold to repeat; it wraps to the minimum after the maximum).
+
+| Field | Default | Range |
+| --- | --- | --- |
+| **Count** (total reps) | 100 | 1–999 |
+| **LEngth** (total time) | 10:00 | 0:15–99:45, 15 s steps |
+| **SEtS** (sets) | 5 | 1–9 |
+| **PACE** (seconds per rep) | 3 | 1–20 |
+
+Reps drop by one per set; when the total doesn't divide evenly, the extra reps go to the first sets (100 in 4 sets → 27, 26, 24, 23). Rest is split evenly between sets, with none after the last.
+
+### Buttons
+
+| Button | Does |
+| --- | --- |
+| **A** (idle) | Start, with a 5 s lead-in |
+| **A** (running) | Pause / resume |
+| **L** (paused) | Reset |
+| **L** (idle) | Edit: Count → LEngth → SEtS → PACE → done |
+| **A** (editing) | Raise the value (hold to repeat) |
+| Any button (finish beeping) | Silence and return to idle |
+
+### Screen
+
+| Screen | Shows |
+| --- | --- |
+| Idle | `S1` on the day digits, total time and set 1's reps on the main digits (`10:00 22`); `Er` when the settings can't work |
+| Lead-in | `GO`, then `StArt`, 4, 3, 2, 1 |
+| Work | `S3`, time left and this set's reps |
+| Rest | `r2`, rest left and next set's reps, with LAP blinking |
+| Done | `donE` |
+
+Each edit field and control shows its word for 1 s (`Count`, `LEngth`, `SEtS`, `PACE`, `StArt`, `PAUSE`, `rESEt`, `Error`).
+
+### Sounds
+
+- Short high beeps at 5-4-3-2-1 for the lead-in.
+- One beep at each work ↔ rest change, including set 1 starting.
+- *beepbeepbeep* at the end, for 10 s (5 s on another face).
+
+### Off screen
+
+Forge only wakes a background face once a minute, so a change while you're on another face beeps at the next minute tick (one beep, however many changes were missed). The face shows the right time when you come back.
+
+Settings reset to defaults when the watch reboots (Forge has no storage yet).
+
 ## Hosted emulator
 
 [kenblizzardcaron.github.io/forge-faces](https://kenblizzardcaron.github.io/forge-faces/) is Ollee's [Forge emulator](https://github.com/olleewatch/forge_emulator) with a few patches, and this repo's faces under [`faces/`](https://kenblizzardcaron.github.io/forge-faces/faces/).
 
 - `upstream/` is a submodule pinned to an upstream commit; `patches/*.patch` are applied on top, in order, by `tools/build-site.sh`.
 - [`0001-touch-support.patch`](patches/0001-touch-support.patch): press and hold the on-screen buttons on phones and tablets (upstream [PR #2](https://github.com/olleewatch/forge_emulator/pull/2)).
-- [`0002-face-url-param.patch`](patches/0002-face-url-param.patch): `?face=<name>` preloads `faces/<name>.js`, with its prebuilt `.min.js` in the minified tab, e.g. [`?face=multitimer`](https://kenblizzardcaron.github.io/forge-faces/?face=multitimer).
+- [`0002-face-url-param.patch`](patches/0002-face-url-param.patch): `?face=<name>` preloads `faces/<name>.js`, with its prebuilt `.min.js` in the minified tab, e.g. [`?face=multitimer`](https://kenblizzardcaron.github.io/forge-faces/?face=multitimer) or [`?face=repladder`](https://kenblizzardcaron.github.io/forge-faces/?face=repladder).
 - A weekly build runs against upstream `main`. If a patch stops applying, the build fails and the last good site stays up: rebase the patch, or delete it once upstream has the change.
 - To add a patch: edit in `upstream/`, then `git -C upstream diff > patches/000N-name.patch` and `git -C upstream checkout .`.
 
