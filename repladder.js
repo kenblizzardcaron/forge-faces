@@ -1,7 +1,7 @@
 // Rep Ladder: a set-by-set rep ladder timer with a work/rest session plan.
 // Upload repladder.min.js, the built copy of this file.
 const subscribe = E_BUTTONS + E_A_LONG;
-var settings = { level: 25, goal: 100, total: 50, length: 600, sets: 5, pace: 3 };
+var settings = { level: 25, goal: 100, base: 600, total: 50, length: 600, sets: 5, pace: 3 };
 
 var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3, OFFER = 4;
 var state = IDLE, startAt = 0, paused = false, pausedAt = 0, current = null, lastPhase = -1, message = '', messageUntil = 0;
@@ -84,12 +84,12 @@ function draw() {
     var q = plan(settings.total, settings.length, settings.sets, settings.pace), v = settings[FIELDS[field]];
     if (field < 2) {
       // The first day digit only shows 1-3, so a level's set 1 reps show here only when under 40.
-      var r = v ? rung(v) : null, lr = r ? plan(r.total, r.length, r.sets, r.pace) : null;
+      var r = v ? rung(v, settings.base) : null, lr = r ? plan(r.total, r.length, r.sets, r.pace) : null;
       day = lr && lr.reps[0] < 40 ? String(lr.reps[0]) : '  ';
       main = v ? String(v) : 'oFF';
     } else {
       day = q ? fmtReps(q.reps[0]) : 'Er';
-      main = field == 3 ? fmtTime(settings.length) + '  ' : ('      ' + v).slice(-6);
+      main = field == 3 ? fmtTime(settings.level ? settings.base : settings.length) + '  ' : ('      ' + v).slice(-6);
       colon = field == 3;
     }
   } else if (state == OFFER && ringTimer == -1) {
@@ -169,21 +169,26 @@ function clock_minute() { catchUp(); draw(); }
 // Sets the ladder level; a rung copies its plan into the manual fields. Level 0 keeps them.
 function setLevel(n) {
   settings.level = n;
-  var r = rung(n);
+  var r = rung(n, settings.base);
   if (r) { settings.total = r.total; settings.length = r.length; settings.sets = r.sets; settings.pace = r.pace; }
 }
 // Steps the current field by its increment, wrapping to the minimum past the maximum; levels 1-9 become 10.
 function bump() {
-  var lim = LIMITS[field], v = settings[FIELDS[field]] + lim[2];
+  var lim = LIMITS[field], onLevel = field == 3 && settings.level > 0, key = onLevel ? 'base' : FIELDS[field];
+  var v = settings[key] + lim[2];
   if (v > lim[1]) v = lim[0];
   if (field == 0 && v > 0 && v < 10) v = 10;
-  if (field == 0) setLevel(v); else settings[FIELDS[field]] = v;
+  if (field == 0) setLevel(v);
+  else if (onLevel) { settings.base = v; setLevel(settings.level); }
+  else settings[key] = v;
 }
-// L in EDIT: Level, Goal, then the manual fields; Goal skips at level 0, and Goal (with a level) or Pace leaves EDIT.
+// L in EDIT: Level, Goal, LEn (on a level), then the manual fields; Goal skips them at level 0, and Pace or LEn on a level leaves EDIT.
 function nextField() {
   var f = field + 1;
   if (field == 0 && !settings.level) f = 2;
-  if (field == 1 || f == FIELDS.length) { field = 0; state = IDLE; }
+  if (field == 1) f = settings.level ? 3 : FIELDS.length;
+  if (field == 3 && settings.level) f = FIELDS.length;
+  if (f == FIELDS.length) { field = 0; state = IDLE; }
   else { field = f; flash(WORDS[f]); }
 }
 // Stops itself if EDIT was left while A was still held.
@@ -259,16 +264,17 @@ function plan(total, length, sets, pace) {
   }
   return { reps: reps, ends: ends };
 }
-// Set-drop levels; each phase trims LEn 15 s per level from 10:00 (5 sets continue on from level 50).
+// Set-drop levels; each phase trims LEn 15 s per level from base (5 sets continue on from level 50).
 var PHASES = [50, 60, 70, 80];
 // 10-50: Count = level x 2. Above 50: Count 100, one set fewer per phase. 100: one set of 100.
-function rung(level) {
+function rung(level, base) {
   if (level < 10 || level > 100) return null;
-  if (level <= 50) return { total: 2 * level, length: 600, sets: 5, pace: 3 };
+  if (base == null) base = 600;
+  if (level <= 50) return { total: 2 * level, length: base, sets: 5, pace: 3 };
   if (level === 100) return { total: 100, length: 300, sets: 1, pace: 3 };
   var k = 0;
   for (var i = 0; i < PHASES.length; i++) if (PHASES[i] <= level) k = i;
-  return { total: 100, length: 600 - 15 * (level - PHASES[k]), sets: 5 - k, pace: 3 };
+  return { total: 100, length: base - 15 * (level - PHASES[k]), sets: 5 - k, pace: 3 };
 }
 
 // Index of the phase running at ms (first end after ms); ends.length once the session is over.

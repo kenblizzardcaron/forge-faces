@@ -123,3 +123,14 @@ test('overlapping presses during the ring', () => {
   assert.equal(w.ctx.state, 0);
   assert.equal(w.ctx.settings.level, 25);
 });
+
+test('offer keeps base', () => {
+  const w = fresh();
+  w.ctx.settings.base = 720;
+  w.ctx.setLevel(25);
+  w.tap('A');
+  w.at(730000);
+  w.tap('A');
+  assert.equal(w.ctx.settings.level, 26);
+  assert.equal(w.ctx.settings.length, 720);
+});

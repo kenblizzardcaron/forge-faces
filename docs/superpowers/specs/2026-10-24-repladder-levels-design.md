@@ -2,6 +2,8 @@
 
 Revised 2026-10-24: levels moved to the main digits, top level 100, default goal 100.
 
+Revised 2026-10-24: LEn on a level sets the ladder's session time (default 10:00); rungs start from it.
+
 ## Intent
 
 The user does Rep Ladder sessions to rebuild and then extend push-up capacity. Today they manage

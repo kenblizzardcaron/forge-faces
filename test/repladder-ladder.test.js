@@ -19,3 +19,10 @@ test('every rung plans', () => {
     assert.ok(ctx.plan(r.total, r.length, r.sets, r.pace), `level ${l}`);
   }
 });
+test('base time', () => {
+  const rung = loadFace('repladder.js').ctx.rung;
+  assert.deepEqual({ ...rung(25, 720) }, { total: 50, length: 720, sets: 5, pace: 3 });
+  assert.equal(rung(51, 720).length, 705);
+  assert.equal(rung(60, 720).length, 720);
+  assert.equal(rung(100, 720).length, 300);
+});

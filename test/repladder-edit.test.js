@@ -155,6 +155,8 @@ test('level and goal fields', () => {
   assert.equal(w.ctx.settings.goal, 10);
   assert.equal(w.ctx.settings.total, 52);
   w.tap('L');
+  assert.equal(w.main(), '   LEn');
+  w.tap('L');
   assert.equal(w.ctx.state, 0);
   assert.equal(w.day(), 'S1');
 });
@@ -200,9 +202,38 @@ test('level 0 goes to the manual fields; a level skips them', () => {
   w.tap('L');
   w.tap('L');
   w.tap('L');
+  assert.equal(w.main(), '   LEn');
+  w.tap('L');
   assert.equal(w.ctx.state, 0);
   w.ctx.setLevel(0);
   w.tap('L');
   w.tap('L');
   assert.equal(w.main(), ' Count');
+});
+
+test('session time on a level', () => {
+  const w = ladder();
+  w.tap('L');
+  w.tap('L');
+  w.tap('L');
+  assert.equal(w.main(), '   LEn');
+  w.advance(1000);
+  assert.equal(w.main(), '1000  ');
+  assert.equal(w.colon, true);
+  w.tap('A');
+  assert.equal(w.main(), '1015  ');
+  assert.equal(w.ctx.settings.base, 615);
+  assert.equal(w.ctx.settings.length, 615);
+  w.tap('L');
+  assert.equal(w.ctx.state, 0);
+  assert.equal(w.main(), '101512');
+});
+
+test('base carries through levels', () => {
+  const w = ladder();
+  w.ctx.settings.base = 720;
+  w.ctx.setLevel(55);
+  assert.equal(w.ctx.settings.length, 645);
+  w.ctx.setLevel(26);
+  assert.equal(w.ctx.settings.length, 720);
 });

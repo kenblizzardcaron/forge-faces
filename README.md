@@ -92,14 +92,14 @@ A declining-rep workout timer: a total number of reps is split across sets, one 
 
 ### Settings
 
-Edit with **L** in idle. **A** raises the value (hold to repeat; it wraps to the minimum after the maximum). Level and Goal come first; Count, LEn, SEtS and PACE are edited only at level 0.
+Edit with **L** in idle. **A** raises the value (hold to repeat; it wraps to the minimum after the maximum). Level and Goal come first, then LEn on a level; Count, SEtS and PACE are edited only at level 0.
 
 | Field | Default | Range |
 | --- | --- | --- |
 | **LEUEL** (ladder level) | 25 | 0 (off), 10–100 |
 | **GOAL** (level to reach) | 100 | 10–100 |
 | **Count** (total reps) | 50 | 1–999 |
-| **LEn** (total time) | 10:00 | 0:15–99:45, 15 s steps |
+| **LEn** (total time) | 10:00 | 0:15–99:45, 15 s steps; on a level, the session time every rung starts from |
 | **SEtS** (sets) | 5 | 1–9 |
 | **PACE** (seconds per rep) | 3 | 1–20 |
 
@@ -111,11 +111,11 @@ A level above 0 sets Count, LEn, SEtS and PACE from this ladder. Every rung uses
 
 | Levels | Sets | Count | LEn | Step per level |
 | --- | --- | --- | --- | --- |
-| 10–50 | 5 | level × 2 (20 → 100) | 10:00 | +2 reps |
-| 51–59 | 5 | 100 | 9:45 → 7:45 | −15 s |
-| 60–69 | 4 | 100 | 10:00 → 7:45 | −15 s (60 resets to 10:00) |
-| 70–79 | 3 | 100 | 10:00 → 7:45 | −15 s (70 resets to 10:00) |
-| 80–99 | 2 | 100 | 10:00 → 5:15 | −15 s (80 resets to 10:00) |
+| 10–50 | 5 | level × 2 (20 → 100) | LEn (10:00 default) | +2 reps |
+| 51–59 | 5 | 100 | 9:45 → 7:45 | LEn − 15 s per level |
+| 60–69 | 4 | 100 | 10:00 → 7:45 | LEn − 15 s per level (60 resets to 10:00) |
+| 70–79 | 3 | 100 | 10:00 → 7:45 | LEn − 15 s per level (70 resets to 10:00) |
+| 80–99 | 2 | 100 | 10:00 → 5:15 | LEn − 15 s per level (80 resets to 10:00) |
 | 100 | 1 | 100 | 5:00 | one set of 100 |
 
 Levels 1–9 don't exist, since 5 sets need at least 15 reps; the level steps 0, 10, 11, … 100 and wraps to 0.
@@ -131,7 +131,7 @@ The first day digit can only show 1–3, so levels live on the main digits.
 | **A** (idle) | Start, with a 5 s lead-in |
 | **A** (running) | Pause / resume |
 | **L** (paused) | Reset |
-| **L** (idle) | Edit: LEUEL → GOAL → done on a level, or LEUEL → Count → LEn → SEtS → PACE → done at level 0 |
+| **L** (idle) | Edit: LEUEL → GOAL → LEn → done on a level, or LEUEL → Count → LEn → SEtS → PACE → done at level 0 |
 | **A** (editing) | Raise the value (hold to repeat) |
 | **A** (offer) | Accept the next level and return to idle |
 | **L** (offer) | Keep the level and return to idle |
