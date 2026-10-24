@@ -7,8 +7,9 @@ var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3;
 var state = IDLE, startAt = 0, paused = false, pausedAt = 0, current = null, lastPhase = -1, message = '', messageUntil = 0;
 var displayTimer = -1, longFired = 0;
 // Edit: L cycles fields; A steps the current one, and holding A repeats every 100 ms on its own slot.
-var FIELDS = ['total', 'length', 'sets', 'pace'], WORDS = ['Count', 'LEn', 'SEtS', 'PACE'];
-var LIMITS = [[1, 999, 1], [15, 5985, 15], [1, 9, 1], [1, 20, 1]];
+var FIELDS = ['level', 'goal', 'total', 'length', 'sets', 'pace'];
+var WORDS = ['LEUEL', 'GOAL', 'Count', 'LEn', 'SEtS', 'PACE'];
+var LIMITS = [[0, 99, 1], [10, 99, 1], [1, 999, 1], [15, 5985, 15], [1, 9, 1], [1, 20, 1]];
 var field = 0, repeatTimer = -1;
 // Finish ring: stock triple, 125 ms steps, beeping on steps 0-2 of each 8; own timer slot.
 var RING_STEP_MS = 125, ringTimer = -1, ringStepNo = 0, ringSteps = 0, cue = 6;
@@ -76,10 +77,16 @@ function draw() {
     main = preview(settings);
     colon = true;
   } else if (state == EDIT) {
-    var q = plan(settings.total, settings.length, settings.sets, settings.pace);
-    day = q ? fmtReps(q.reps[0]) : 'Er';
-    main = field == 1 ? fmtTime(settings.length) + '  ' : ('      ' + settings[FIELDS[field]]).slice(-6);
-    colon = field == 1;
+    var q = plan(settings.total, settings.length, settings.sets, settings.pace), v = settings[FIELDS[field]];
+    if (field < 2) {
+      day = String(v);
+      main = v ? preview(rung(v)) : 'oFF';
+      colon = v != 0;
+    } else {
+      day = q ? fmtReps(q.reps[0]) : 'Er';
+      main = field == 3 ? fmtTime(settings.length) + '  ' : ('      ' + v).slice(-6);
+      colon = field == 3;
+    }
   } else if (state == RUNNING && elapsed() < 0) {
     var s = Math.ceil(-elapsed() / 1000);
     day = 'GO';
@@ -150,10 +157,25 @@ function updateSubscriptions() {
 }
 function clock_minute() { catchUp(); draw(); }
 
-// Steps the current field by its increment, wrapping to the minimum past the maximum.
+// Sets the ladder level; a rung copies its plan into the manual fields. Level 0 keeps them.
+function setLevel(n) {
+  settings.level = n;
+  var r = rung(n);
+  if (r) { settings.total = r.total; settings.length = r.length; settings.sets = r.sets; settings.pace = r.pace; }
+}
+// Steps the current field by its increment, wrapping to the minimum past the maximum; levels 1-9 become 10.
 function bump() {
   var lim = LIMITS[field], v = settings[FIELDS[field]] + lim[2];
-  settings[FIELDS[field]] = v > lim[1] ? lim[0] : v;
+  if (v > lim[1]) v = lim[0];
+  if (field == 0 && v > 0 && v < 10) v = 10;
+  if (field == 0) setLevel(v); else settings[FIELDS[field]] = v;
+}
+// L in EDIT: Level, Goal, then the manual fields; Goal skips at level 0, and Goal (with a level) or Pace leaves EDIT.
+function nextField() {
+  var f = field + 1;
+  if (field == 0 && !settings.level) f = 2;
+  if (field == 1 || f == FIELDS.length) { field = 0; state = IDLE; }
+  else { field = f; flash(WORDS[f]); }
 }
 // Stops itself if EDIT was left while A was still held.
 function repeatStep() { if (state != EDIT) { stopRepeat(); return; } bump(); draw(); }
@@ -180,7 +202,7 @@ function button(b, e) {
     else if (state == IDLE && b == B_A) start();
     else if (state == IDLE && b == B_L) { state = EDIT; field = 0; flash(WORDS[0]); }
     else if (state == EDIT && b == B_A) bump();
-    else if (state == EDIT && b == B_L) { if (++field == FIELDS.length) { field = 0; state = IDLE; } else flash(WORDS[field]); }
+    else if (state == EDIT && b == B_L) nextField();
     else if (state == RUNNING && b == B_A) { if (paused) resume(); else pause(); }
     else if (state == RUNNING && paused && b == B_L) reset();
   }

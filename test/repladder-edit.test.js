@@ -7,12 +7,14 @@ function fresh() {
   const w = loadFace('repladder.js');
   w.ctx.settings = { level: 0, goal: 50, total: 100, length: 600, sets: 5, pace: 3 };
   w.ctx.draw();
-  w.at =(ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
+  w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
   return w;
 }
 
 test('walk the fields', () => {
   const w = fresh();
+  w.tap('L');
+  assert.equal(w.main(), ' LEUEL');
   w.tap('L');
   assert.equal(w.main(), ' Count');
   assert.equal(w.day(), '22');
@@ -44,12 +46,14 @@ test('walk the fields', () => {
 test('wrap', () => {
   const w = fresh();
   w.tap('L');
+  w.tap('L');
   w.advance(1000);
   w.ctx.settings.total = 999;
   w.tap('A');
   assert.equal(w.main(), '     1');
 
   const s = fresh();
+  s.tap('L');
   s.tap('L');
   s.tap('L');
   s.tap('L');
@@ -61,6 +65,7 @@ test('wrap', () => {
   const l = fresh();
   l.tap('L');
   l.tap('L');
+  l.tap('L');
   l.advance(1000);
   l.ctx.settings.length = 5985;
   l.tap('A');
@@ -69,6 +74,7 @@ test('wrap', () => {
 
 test('hold repeats', () => {
   const w = fresh();
+  w.tap('L');
   w.tap('L');
   w.advance(1000);
   w.hold('A', 2000);
@@ -80,6 +86,7 @@ test('hold repeats', () => {
 
 test('Er while editing', () => {
   const w = fresh();
+  w.tap('L');
   w.tap('L');
   w.advance(1000);
   w.ctx.settings.total = 5;
@@ -101,6 +108,7 @@ test('leaving edit stops a held repeat', () => {
   w.tap('L');
   w.tap('L');
   w.tap('L');
+  w.tap('L');
   assert.equal(w.main(), '  PACE');
   w.advance(1000);
   // Start a hold on A without releasing it, as a long press would.
@@ -114,4 +122,73 @@ test('leaving edit stops a held repeat', () => {
   w.advance(1000);
   assert.equal(JSON.stringify(w.ctx.settings), before);
   assert.equal(w.ctx.state, 0);
+});
+
+// Ladder face at the default level 25, idle.
+function ladder() {
+  const w = loadFace('repladder.js');
+  w.advance(1000);
+  w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
+  return w;
+}
+
+test('level and goal fields', () => {
+  const w = ladder();
+  w.tap('L');
+  assert.equal(w.main(), ' LEUEL');
+  assert.equal(w.day(), '25');
+  w.advance(1000);
+  assert.equal(w.main(), '100012');
+  w.tap('A');
+  assert.equal(w.day(), '26');
+  assert.equal(w.main(), '100013');
+  assert.equal(w.ctx.settings.total, 52);
+  w.tap('L');
+  assert.equal(w.main(), '  GOAL');
+  w.advance(1000);
+  assert.equal(w.day(), '50');
+  assert.equal(w.main(), '100022');
+  w.tap('A');
+  assert.equal(w.main(), ' 94522');
+  assert.equal(w.ctx.settings.goal, 51);
+  assert.equal(w.ctx.settings.total, 52);
+  w.tap('L');
+  assert.equal(w.ctx.state, 0);
+  assert.equal(w.day(), '26');
+});
+
+test('level wrap', () => {
+  const w = ladder();
+  w.ctx.setLevel(99);
+  w.tap('L');
+  w.advance(1000);
+  w.tap('A');
+  assert.equal(w.ctx.settings.level, 0);
+  assert.equal(w.main(), '   oFF');
+  assert.deepEqual([w.ctx.settings.total, w.ctx.settings.length, w.ctx.settings.sets], [100, 300, 1]);
+  w.tap('A');
+  assert.equal(w.ctx.settings.level, 10);
+  assert.equal(w.main(), '100006');
+});
+
+test('goal wrap', () => {
+  const w = ladder();
+  w.ctx.settings.goal = 99;
+  w.tap('L');
+  w.tap('L');
+  w.advance(1000);
+  w.tap('A');
+  assert.equal(w.ctx.settings.goal, 10);
+});
+
+test('level 0 goes to the manual fields; a level skips them', () => {
+  const w = ladder();
+  w.tap('L');
+  w.tap('L');
+  w.tap('L');
+  assert.equal(w.ctx.state, 0);
+  w.ctx.setLevel(0);
+  w.tap('L');
+  w.tap('L');
+  assert.equal(w.main(), ' Count');
 });
