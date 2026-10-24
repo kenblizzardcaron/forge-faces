@@ -133,7 +133,8 @@ function bump() {
   var lim = LIMITS[field], v = settings[FIELDS[field]] + lim[2];
   settings[FIELDS[field]] = v > lim[1] ? lim[0] : v;
 }
-function repeatStep() { bump(); draw(); }
+// Stops itself if EDIT was left while A was still held.
+function repeatStep() { if (state != EDIT) { stopRepeat(); return; } bump(); draw(); }
 function stopRepeat() {
   if (repeatTimer != -1) Ollee.clearInterval(repeatTimer);
   repeatTimer = -1;
@@ -148,7 +149,9 @@ function button(b, e) {
   if (ringTimer != -1) stopRing();
   if (e != E_UP) return;
   if (b == B_A) stopRepeat();
-  if (!longFired) {
+  // longFired is only set by A, so an L release while A is held is not swallowed.
+  var longPress = b == B_A && longFired;
+  if (!longPress) {
     if (state == DONE) state = IDLE;
     else if (state == IDLE && b == B_A) start();
     else if (state == IDLE && b == B_L) { state = EDIT; field = 0; flash(WORDS[0]); }
@@ -157,7 +160,7 @@ function button(b, e) {
     else if (state == RUNNING && b == B_A) { if (paused) resume(); else pause(); }
     else if (state == RUNNING && paused && b == B_L) reset();
   }
-  longFired = 0;
+  if (b == B_A) longFired = 0;
   draw();
 }
 

@@ -92,3 +92,24 @@ test('no edit while running', () => {
   w.tap('L');
   assert.equal(w.ctx.state, 1);
 });
+
+test('leaving edit stops a held repeat', () => {
+  const w = fresh();
+  w.tap('L');
+  w.tap('L');
+  w.tap('L');
+  w.tap('L');
+  assert.equal(w.main(), '  PACE');
+  w.advance(1000);
+  // Start a hold on A without releasing it, as a long press would.
+  w.ctx.button(0, 0);
+  w.ctx.a_long();
+  w.advance(300);
+  w.tap('L');
+  assert.equal(w.ctx.state, 0);
+  assert.equal(w.main(), '100022');
+  const before = JSON.stringify(w.ctx.settings);
+  w.advance(1000);
+  assert.equal(JSON.stringify(w.ctx.settings), before);
+  assert.equal(w.ctx.state, 0);
+});
