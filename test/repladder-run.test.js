@@ -90,15 +90,22 @@ test('lead-in on a level', () => {
   w.ctx.setLevel(45);
   w.tap('A');
   assert.equal(w.main(), 'LEU 45');
+  assert.equal(w.day(), ' 5');
+  assert.equal(w.colon, false);
   w.advance(1000);
   assert.equal(w.main(), 'rEP 90');
+  assert.equal(w.day(), ' 4');
   w.advance(1000);
   assert.equal(w.main(), '1000  ');
-  assert.equal(w.colon, true);
+  assert.equal(w.day(), ' 3');
+  assert.strictEqual(w.colon, true);
   w.advance(1000);
   assert.equal(w.main(), 'SEtS 5');
+  assert.equal(w.day(), ' 2');
   w.advance(1000);
   assert.equal(w.main(), '    GO');
+  assert.equal(w.day(), ' 1');
+  assert.equal(w.colon, false);
 });
 
 test('work countdown', () => {

@@ -105,7 +105,7 @@ function draw() {
     var k = Math.max(0, Math.min(4, 5 - s));
     day = ' ' + Math.min(s, 5);
     main = items[k];
-    colon = (k == 2 && lv) || (k == 1 && !lv);
+    colon = lv ? k == 2 : k == 1;
   } else if (state == RUNNING) {
     var i = phaseAt(current, elapsed()), left = Math.ceil((current.ends[i] - elapsed()) / 1000);
     colon = true;
