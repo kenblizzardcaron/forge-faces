@@ -1,7 +1,7 @@
 // Rep Ladder: a set-by-set rep ladder timer with a work/rest session plan.
 // Upload repladder.min.js, the built copy of this file.
 const subscribe = E_BUTTONS + E_A_LONG;
-var settings = { level: 25, goal: 100, base: 600, total: 50, length: 600, sets: 5, pace: 3 };
+var settings = { level: 45, goal: 100, base: 600, total: 90, length: 600, sets: 5, pace: 3 };
 
 var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3, OFFER = 4;
 var state = IDLE, startAt = 0, paused = false, pausedAt = 0, current = null, lastPhase = -1, message = '', messageUntil = 0;
