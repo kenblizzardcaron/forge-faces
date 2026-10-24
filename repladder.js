@@ -72,7 +72,7 @@ function draw() {
     } else {
       day = 'r' + ((i + 1) / 2);
       main = fmtTime(left) + fmtReps(current.reps[(i + 1) / 2]);
-      lap = Math.floor(now() / 500) % 2 == 0;
+      lap = !paused && Math.floor(now() / 500) % 2 == 0;
     }
   }
   if (flashing()) { main = message; colon = false; lap = false; }
@@ -89,7 +89,8 @@ function schedule() {
   if (displayTimer != -1) Ollee.clearTimeout(displayTimer);
   displayTimer = -1;
   if (flashing()) d = messageUntil - now();
-  if (state == RUNNING) {
+  // Paused: the clock is frozen, so only the flash end needs a wakeup.
+  if (state == RUNNING && !paused) {
     i = e < 0 ? -1 : phaseAt(current, e);
     // A second change never passes a phase end, so the phase end is covered too.
     d = earliest(d, e < 0 ? secondStep(-e) : secondStep(current.ends[i] - e));
@@ -113,6 +114,11 @@ function enter() {
 // The platform cancels timers when the face leaves the screen.
 function exit() { displayTimer = -1; ringTimer = -1; }
 
+// Pausing freezes elapsed(); resuming moves startAt so the clock picks up where it stopped.
+function pause() { paused = true; pausedAt = now(); flash('PAUSE'); }
+function resume() { startAt += now() - pausedAt; paused = false; messageUntil = 0; }
+function reset() { paused = false; state = IDLE; flash('rESEt'); }
+
 function a_long() { longFired = 1; }
 // Any press silences a ringing finish. Acts on release unless the long press fired; in DONE any button returns to IDLE.
 function button(b, e) {
@@ -121,6 +127,8 @@ function button(b, e) {
   if (!longFired) {
     if (state == DONE) state = IDLE;
     else if (state == IDLE && b == B_A) start();
+    else if (state == RUNNING && b == B_A) { if (paused) resume(); else pause(); }
+    else if (state == RUNNING && paused && b == B_L) reset();
   }
   longFired = 0;
   draw();
