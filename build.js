@@ -1,6 +1,6 @@
 // Builds each face's <name>.js into <name>.min.js: npm install terser@5 && node build.js
 // Top-level names are shortened; the hooks the watch calls by name and `subscribe` are kept.
-// Optional local.json (gitignored), e.g. {"repladder": {"level": 45}}, also builds <name>.local.min.js.
+// Optional local.json (gitignored), e.g. {"repladder": {"level": 45}}, also writes <name>-local.js and its <name>-local.min.js.
 const fs = require('node:fs');
 const { minify } = require('terser');
 
@@ -40,7 +40,8 @@ async function main() {
     await build(name);
     if (LOCAL[name]) {
       const src = localize(fs.readFileSync(`${name}.js`, 'utf8'), name, LOCAL[name]);
-      await build(name, src, `${name}.local.min.js`);
+      fs.writeFileSync(`${name}-local.js`, src);
+      await build(name, src, `${name}-local.min.js`);
     }
   }
 }

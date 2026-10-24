@@ -1,4 +1,5 @@
 node_modules/
 package-lock.json
-*.local.min.js
+*-local.js
+*-local.min.js
 local.json
