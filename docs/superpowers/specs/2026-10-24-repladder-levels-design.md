@@ -55,19 +55,19 @@ Every rung uses PACE 3. Work time is Count × 3 s. Rest is split as today.
 | 100 | 1 | 100 | 5:00 | the lofty goal: one set of 100 at PACE 3 |
 
 Key rungs: 25 = 50 push-ups (default start), 45 = 90 (the user today), 50 = 100 in 5 sets
-(default goal), 60 = 100 in 4 sets over 10:00, 99 = 100 in one set. Each set drop lands on a
-round level (60, 70, 80) and the top is 99 (user asked; 100 won't fit the two day digits).
+60 = 100 in 4 sets over 10:00, 100 = 100 in one set (the default goal). Each set drop lands on
+a round level (60, 70, 80), and the top level matches the push-ups.
 
 Levels 1–9 don't exist: 5 sets need at least 15 reps, so level 10 (20 reps: 6+5+4+3+2) is the
-floor. The level field steps 0, 10, 11, … 99 and wraps back to 0.
+floor. The level field steps 0, 10, 11, … 100 and wraps back to 0.
 
 Rest per gap at a phase's start → end: 5 sets 75 s → 41 s, 4 sets 100 s → 55 s, 3 sets
 150 s → 82 s, 2 sets 300 s → 30 s. The 2-set phase trims further so the final jump to one set
 isn't a cliff. **The phase boundaries above 50 are Claude's call** and are expected to be tuned
 over time. Keep them in one small table or formula in the source so retuning is a one-line edit.
-Levels must stay ≤ 99 to fit the two day digits.
+Levels show on the main digits; the first day digit can only show 1–3.
 
-**Level 99 on screen (Claude's call).** Idle shows `5:00` with the day digits at `99`, and the
+**Level 100 on screen (Claude's call).** Idle shows `5:00`, and the
 reps digits blank as they do today for any count over 99. During the set, the count-up shows
 1–99 and goes blank for the 100th rep, the last 3 s before the finish ring.
 
@@ -78,23 +78,21 @@ reps digits blank as they do today for any count over 99. During the set, the co
 1. **Level** (word shown for 1 s like the other fields, e.g. `LEUEL`; the exact word is picked
    when it's checked in the emulator, since the display is 7-segment). **A** steps as above and
    wraps; holding repeats every 100 ms, as today.
-2. **Goal** (word e.g. `GOAL`), shown only when level > 0. It steps 10 … 99 and wraps. Default 50.
+2. **Goal** (word e.g. `GOAL`), shown only when level > 0. It steps 10 … 100 and wraps. Default 100.
 3. If level is 0, the existing Count → LEn → SEtS → PACE fields follow. If level > 0, they're
    skipped, because the level sets them.
 
-While stepping Level or Goal, the day digits show the number being edited and the main digits
-preview that rung the way idle does (LEn and set 1's reps), so the user sees what the number means.
+While stepping Level or Goal, the main digits show the number being edited, and the day digits
+show that rung's set 1 reps when under 40 (blank otherwise; `oFF` at level 0).
 
 Choosing a level > 0 loads its Count, LEn, SEtS and PACE into the settings. Setting the level
 to 0 leaves those values in place as the starting point for manual edits.
 
-**Idle.** On the ladder, the day digits show the level number (`45`) instead of `S1`. The main
-digits are unchanged (LEn and set 1's reps). Level 0 looks exactly as today.
+**Idle.** Unchanged from before levels: `S1`, LEn and set 1's reps. The level shows by pressing L.
 
 **Finish and offer.** When a ladder session ends naturally (DONE) below the goal:
 - The finish ring plays as today. A press during the ring only silences it.
-- After that, the face shows the offer: that it's an offer, the next level's number, and how many
-  levels remain to the goal. The exact layout is picked in the emulator check.
+- After that, the face shows the offer on the main digits: `UP` and the next level (`UP  46`).
 - **A** accepts: level + 1, settings load, back to idle. **L** declines: same level, back to idle.
 
 When accepting reaches the goal, the face marks it once (e.g. a `GOAL` word for a few seconds),
@@ -116,7 +114,7 @@ Off the ladder (level 0), DONE behaves exactly as today.
 
 ## Left to the builder
 
-- How the ladder is encoded: a phase table or a formula, as long as levels 10–99 match the table.
+- How the ladder is encoded: a phase table or a formula, as long as levels 10–100 match the table.
 - State names, and whether the offer is a new state or a flag on DONE.
 - Field and word order details beyond what's above, and the README update.
 - Final words and offer layout, which are confirmed visually in the emulator by the controller.
