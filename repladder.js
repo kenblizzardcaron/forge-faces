@@ -3,9 +3,9 @@
 const subscribe = E_BUTTONS + E_A_LONG;
 var settings = { level: 25, goal: 50, total: 50, length: 600, sets: 5, pace: 3 };
 
-var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3;
+var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3, OFFER = 4;
 var state = IDLE, startAt = 0, paused = false, pausedAt = 0, current = null, lastPhase = -1, message = '', messageUntil = 0;
-var displayTimer = -1, longFired = 0;
+var displayTimer = -1, longFired = 0, hush = 0;
 // Edit: L cycles fields; A steps the current one, and holding A repeats every 100 ms on its own slot.
 var FIELDS = ['level', 'goal', 'total', 'length', 'sets', 'pace'];
 var WORDS = ['LEUEL', 'GOAL', 'Count', 'LEn', 'SEtS', 'PACE'];
@@ -21,7 +21,7 @@ function fmtTime(secs) { var m = Math.floor(secs / 60); return (m < 10 ? ' ' : '
 function fmtReps(r) { return r > 99 ? '  ' : pad(r); }
 function elapsed() { return (paused ? pausedAt : now()) - startAt; }
 function flashing() { return now() < messageUntil; }
-function flash(word) { message = word; messageUntil = now() + 1000; draw(); }
+function flash(word, ms) { message = word; messageUntil = now() + (ms || 1000); draw(); }
 // ms until ceil(msLeft / 1000) changes; always in (0, 1000].
 function secondStep(msLeft) { return msLeft - 1000 * (Math.ceil(msLeft / 1000) - 1); }
 function earliest(d, x) { return d && d < x ? d : x; }
@@ -29,7 +29,10 @@ function earliest(d, x) { return d && d < x ? d : x; }
 // One beep per work/rest change; the last phase end rings the finish and sets DONE.
 function onPhase(i) {
   lastPhase = i;
-  if (i == current.ends.length) { state = DONE; startRing(Ollee.active()); updateSubscriptions(); return; }
+  if (i == current.ends.length) {
+    state = settings.level > 0 && settings.level < settings.goal ? OFFER : DONE;
+    startRing(Ollee.active()); updateSubscriptions(); return;
+  }
   Ollee.beep();
 }
 // Off screen, the minute tick (or entering) catches up in one step: one beep however many phases passed.
@@ -55,6 +58,7 @@ function ringStep() {
   ringTimer = -1;
   if (ringStepNo % 8 < 3) Ollee.beep();
   if (++ringStepNo < ringSteps) ringTimer = Ollee.setTimeout(ringStep, RING_STEP_MS);
+  else draw();
 }
 function stopRing() {
   if (ringTimer != -1) Ollee.clearTimeout(ringTimer);
@@ -87,6 +91,10 @@ function draw() {
       main = field == 3 ? fmtTime(settings.length) + '  ' : ('      ' + v).slice(-6);
       colon = field == 3;
     }
+  } else if (state == OFFER && ringTimer == -1) {
+    day = String(settings.level + 1);
+    main = 'UP  ' + pad(settings.goal - settings.level - 1);
+    colon = false;
   } else if (state == RUNNING && elapsed() < 0) {
     var s = Math.ceil(-elapsed() / 1000);
     day = 'GO';
@@ -189,9 +197,12 @@ function a_long() {
   if (state == EDIT && repeatTimer == -1) repeatTimer = Ollee.setInterval(repeatStep, 100);
 }
 // Any press silences a ringing finish. Acts on release unless the long press fired; in DONE any button returns to IDLE.
+// A press that silences an OFFER ring is hushed: its release only clears the hush, so the offer is not answered.
 function button(b, e) {
+  if (e != E_UP) hush = state == OFFER && ringTimer != -1 ? 1 : 0;
   if (ringTimer != -1) stopRing();
   if (e != E_UP) return;
+  if (hush) { hush = 0; longFired = 0; draw(); return; }
   if (b == B_A) stopRepeat();
   // longFired is only set by A, so an L release while A is held is not swallowed.
   var longPress = b == B_A && longFired;
@@ -205,6 +216,12 @@ function button(b, e) {
     else if (state == EDIT && b == B_L) nextField();
     else if (state == RUNNING && b == B_A) { if (paused) resume(); else pause(); }
     else if (state == RUNNING && paused && b == B_L) reset();
+    else if (state == OFFER && b == B_A) {
+      setLevel(settings.level + 1);
+      state = IDLE;
+      if (settings.level == settings.goal) flash('GOAL', 3000);
+    }
+    else if (state == OFFER && b == B_L) state = IDLE;
   }
   if (b == B_A) longFired = 0;
   updateSubscriptions();
