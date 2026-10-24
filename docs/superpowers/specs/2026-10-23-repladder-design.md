@@ -131,7 +131,7 @@ Borrow multitimer's button conventions:
 - One beep at each work↔rest change.
 - 5-second lead-in with multitimer's countdown beeps.
 - Pause/resume plus reset.
-- Finish uses multitimer's *beepbeepbeep*.
+- Finish uses multitimer's *beepbeepbeep*, for 10 s (5 s off screen).
 - Between sets the screen shows set number, rest countdown, and work vs rest clearly.
 - Readable ~1 s words on the main digits at edits and control actions; exercise-neutral wording (`Count`).
 
@@ -147,8 +147,6 @@ Borrow multitimer's button conventions:
 ## Left to the builder
 
 - Edit ranges and step sizes for each field.
-- How long the finish ring lasts (multitimer caps at 20 s on screen, 5 s off screen) and how the
-  Done screen returns to idle.
 - Behaviour off screen (reasonable default: mirror multitimer — catch up at the minute tick).
 - Rounding when the rest time is not a whole number of seconds.
 - Whether the rep/timing math lives in a pure function that a node script can test.

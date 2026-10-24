@@ -223,7 +223,7 @@ git commit -m "repladder: run a session with lead-in, sets, rests and done scree
 
 **Interfaces:**
 - Consumes: `onPhase(i)`, `state`, `startAt` (Task 3).
-- Produces: `function startRing(onScreen)` (the finish triple; 20 periods on screen, 5 off) and `function stopRing()`. Task 7 calls `startRing(false)`.
+- Produces: `function startRing(onScreen)` (the finish triple; 10 periods (10 s) on screen, 5 off) and `function stopRing()`. Task 7 calls `startRing(false)`.
 
 **Sounds:**
 - Lead-in: `Ollee.beepShort()` at 5, 4, 3, 2, 1 s before set 1 (the first one on the press itself).
@@ -234,7 +234,7 @@ git commit -m "repladder: run a session with lead-in, sets, rests and done scree
   - `lead-in shorts`: tap A at `t0`; advance 4000 → 5 `'short'` at `t0 + 0, 1000, 2000, 3000, 4000`, and no `'beep'`.
   - `set 1 start beep`: advance to `t0 + 5000` → exactly 1 `'beep'`, at `t0 + 5000`.
   - `nine change beeps`: run the default session to `at(599999)` → 9 `'beep'`, the 2nd at `elapsed` 66000.
-  - `finish ring`: `at(600000)`, then advance 25000 → 60 more `'beep'`; the first six are at `end + 0, 125, 250, 1000, 1125, 1250`.
+  - `finish ring`: `at(600000)`, then advance 15000 → 30 more `'beep'`; the first six are at `end + 0, 125, 250, 1000, 1125, 1250`.
   - `button stops ring`: at `end + 1100`, tap A → exactly 4 ring beeps, none after advance 5000, and main `'100022'`.
   - `zero rest beeps once`: settings 100/300/5/3; `at(66000)` → 2 `'beep'` in total (set 1 start + one).
 
