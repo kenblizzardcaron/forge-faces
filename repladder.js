@@ -28,8 +28,14 @@ function earliest(d, x) { return d && d < x ? d : x; }
 // One beep per work/rest change; the last phase end rings the finish and sets DONE.
 function onPhase(i) {
   lastPhase = i;
-  if (i == current.ends.length) { state = DONE; startRing(Ollee.active()); return; }
+  if (i == current.ends.length) { state = DONE; startRing(Ollee.active()); updateSubscriptions(); return; }
   Ollee.beep();
+}
+// Off screen, the minute tick (or entering) catches up in one step: one beep however many phases passed.
+function catchUp() {
+  if (state != RUNNING) return;
+  var e = elapsed(), i = e < 0 ? -1 : phaseAt(current, e);
+  if (i > lastPhase) onPhase(i);
 }
 // Catches up with the clock: a short beep per lead-in second, then fires onPhase when the phase index moves.
 function sync() {
@@ -118,6 +124,7 @@ function start() {
 function enter() {
   Ollee.clear();
   displayTimer = -1;
+  catchUp();
   draw();
 }
 // The platform cancels timers when the face leaves the screen.
@@ -127,6 +134,12 @@ function exit() { displayTimer = -1; ringTimer = -1; repeatTimer = -1; }
 function pause() { paused = true; pausedAt = now(); flash('PAUSE'); }
 function resume() { startAt += now() - pausedAt; paused = false; messageUntil = 0; }
 function reset() { paused = false; state = IDLE; flash('rESEt'); }
+// Only a running, unpaused session needs the minute tick, which reaches the face off screen.
+function updateSubscriptions() {
+  if (state == RUNNING && !paused) Ollee.subscribe(E_CLOCK_MINUTE);
+  else Ollee.unsubscribe(E_CLOCK_MINUTE);
+}
+function clock_minute() { catchUp(); draw(); }
 
 // Steps the current field by its increment, wrapping to the minimum past the maximum.
 function bump() {
@@ -161,6 +174,7 @@ function button(b, e) {
     else if (state == RUNNING && paused && b == B_L) reset();
   }
   if (b == B_A) longFired = 0;
+  updateSubscriptions();
   draw();
 }
 
