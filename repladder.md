@@ -2,7 +2,9 @@
 
 [Source](repladder.js) · upload [repladder.min.js](repladder.min.js) to the watch · [Open in emulator](https://kenblizzardcaron.github.io/forge-faces/?face=repladder) · [All faces](README.md)
 
-A declining-rep workout timer: a total number of reps is split across sets, one fewer rep each set, with rest between sets.
+A rep-based progression coach for your wrist, for push-ups, squats, pull-ups or any exercise you count in reps. Each session splits your reps into declining sets (22, 21, 20, 19, 18), paces them with beeps at every work and rest change, and counts reps up as you go, so you stay on tempo without watching the screen.
+
+On top of that sits a 100-level ladder, from 20 reps in five sets up to 100 in a single set. Level 45 means the same session for everyone, and the level number shows how far you've come. After you finish a session, the face offers the next small step (two more reps, a little less rest, or one fewer set). You accept or keep your level, and you set the goal and session time.
 
 ## Settings
 

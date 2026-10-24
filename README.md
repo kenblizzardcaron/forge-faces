@@ -6,7 +6,7 @@ Custom watch faces for the [Ollee Watch](https://www.olleewatch.com), written fo
 | Face | Guide | Try it | What it does |
 | --- | --- | --- | --- |
 | [multitimer.js](multitimer.js) (upload [multitimer.min.js](multitimer.min.js)) | [multitimer.md](multitimer.md) | [Open in emulator](https://kenblizzardcaron.github.io/forge-faces/?face=multitimer) | Feature-parity replacement for the official TIMER face, with up to three timers running at once. |
-| [repladder.js](repladder.js) (upload [repladder.min.js](repladder.min.js)) | [repladder.md](repladder.md) | [Open in emulator](https://kenblizzardcaron.github.io/forge-faces/?face=repladder) | Declining-rep workout timer: reps split across sets, one fewer each set, with rest only between sets. |
+| [repladder.js](repladder.js) (upload [repladder.min.js](repladder.min.js)) | [repladder.md](repladder.md) | [Open in emulator](https://kenblizzardcaron.github.io/forge-faces/?face=repladder) | Rep-based progression coach for any counted exercise: paced, declining sets with beeps and a rep count-up, plus a 100-level ladder from 20 reps to 100 in one set that offers a small step up after each session. |
 
 ## Try a face
 
