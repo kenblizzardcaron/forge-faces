@@ -20,7 +20,7 @@ test('walk the fields', () => {
   assert.equal(w.main(), '   101');
   assert.equal(w.day(), '23');
   w.tap('L');
-  assert.equal(w.main(), 'LEngth');
+  assert.equal(w.main(), '   LEn');
   w.advance(1000);
   assert.equal(w.main(), '1000  ');
   assert.equal(w.colon, true);

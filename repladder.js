@@ -7,7 +7,7 @@ var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3;
 var state = IDLE, startAt = 0, paused = false, pausedAt = 0, current = null, lastPhase = -1, message = '', messageUntil = 0;
 var displayTimer = -1, longFired = 0;
 // Edit: L cycles fields; A steps the current one, and holding A repeats every 100 ms on its own slot.
-var FIELDS = ['total', 'length', 'sets', 'pace'], WORDS = ['Count', 'LEngth', 'SEtS', 'PACE'];
+var FIELDS = ['total', 'length', 'sets', 'pace'], WORDS = ['Count', 'LEn', 'SEtS', 'PACE'];
 var LIMITS = [[1, 999, 1], [15, 5985, 15], [1, 9, 1], [1, 20, 1]];
 var field = 0, repeatTimer = -1;
 // Finish ring: stock triple, 125 ms steps, beeping on steps 0-2 of each 8; own timer slot.
@@ -77,7 +77,7 @@ function draw() {
   } else if (state == RUNNING && elapsed() < 0) {
     var s = Math.ceil(-elapsed() / 1000);
     day = 'GO';
-    main = s >= 5 ? 'StArt' : String(s);
+    main = s >= 5 ? 'rEAdy' : String(s);
   } else if (state == RUNNING) {
     var i = phaseAt(current, elapsed()), left = Math.ceil((current.ends[i] - elapsed()) / 1000);
     colon = true;

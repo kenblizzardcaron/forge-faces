@@ -8,7 +8,7 @@ function fresh() {
   w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
   return w;
 }
-// Beeps of one kind; t is the fake clock in ms.
+// Beeps of one kind.
 function kinds(w, k) { return w.beeps.filter((b) => b.kind === k); }
 
 test('lead-in shorts', () => {

@@ -8,7 +8,7 @@ function fresh() {
   w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
   return w;
 }
-// Beeps of one kind; t is the fake clock in ms.
+// Beeps of one kind.
 function kinds(w, k) { return w.beeps.filter((b) => b.kind === k); }
 
 test('pause in lead-in', () => {
@@ -48,7 +48,7 @@ test('no LAP while paused', () => {
   w.at(70000);
   w.tap('A');
   assert.equal(w.lap, false);
-  w.advance(500);
+  w.advance(250);
   assert.equal(w.lap, false);
 });
 
@@ -72,4 +72,17 @@ test('L ignored while running', () => {
   w.tap('L');
   assert.equal(w.ctx.state, 1);
   assert.equal(w.day(), 'S1');
+});
+
+test('start after reset is not paused', () => {
+  const w = fresh();
+  w.tap('A');
+  w.advance(2500);
+  w.tap('A');
+  w.tap('L');
+  w.advance(1000);
+  w.tap('A');
+  w.advance(5000);
+  assert.equal(w.ctx.paused, false);
+  assert.equal(w.main(), ' 10622');
 });

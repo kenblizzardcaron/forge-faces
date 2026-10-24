@@ -6,7 +6,7 @@ Custom watch faces for the [Ollee Watch](https://www.olleewatch.com), written fo
 | Face | What it does |
 | --- | --- |
 | [multitimer.js](multitimer.js) (upload [multitimer.min.js](multitimer.min.js)) | Feature-parity replacement for the official TIMER face, with up to three timers running at once. |
-| [repladder.js](repladder.js) (upload [repladder.min.js](repladder.min.js)) | Declining-rep workout timer: 100 reps in 5 sets over a set time, one fewer rep each set. |
+| [repladder.js](repladder.js) (upload [repladder.min.js](repladder.min.js)) | Declining-rep workout timer: reps split across sets, one fewer each set, with rest only between sets. |
 
 ## Try a face
 
@@ -93,7 +93,7 @@ Edit with **L** in idle, in this order. **A** raises the value (hold to repeat; 
 | Field | Default | Range |
 | --- | --- | --- |
 | **Count** (total reps) | 100 | 1–999 |
-| **LEngth** (total time) | 10:00 | 0:15–99:45, 15 s steps |
+| **LEn** (total time) | 10:00 | 0:15–99:45, 15 s steps |
 | **SEtS** (sets) | 5 | 1–9 |
 | **PACE** (seconds per rep) | 3 | 1–20 |
 
@@ -106,7 +106,7 @@ Reps drop by one per set; when the total doesn't divide evenly, the extra reps g
 | **A** (idle) | Start, with a 5 s lead-in |
 | **A** (running) | Pause / resume |
 | **L** (paused) | Reset |
-| **L** (idle) | Edit: Count → LEngth → SEtS → PACE → done |
+| **L** (idle) | Edit: Count → LEn → SEtS → PACE → done |
 | **A** (editing) | Raise the value (hold to repeat) |
 | Any button (finish beeping) | Silence and return to idle |
 
@@ -115,12 +115,12 @@ Reps drop by one per set; when the total doesn't divide evenly, the extra reps g
 | Screen | Shows |
 | --- | --- |
 | Idle | `S1` on the day digits, total time and set 1's reps on the main digits (`10:00 22`); `Er` when the settings can't work |
-| Lead-in | `GO`, then `StArt`, 4, 3, 2, 1 |
+| Lead-in | `GO`, then `rEAdy`, 4, 3, 2, 1 |
 | Work | `S3`, time left and this set's reps |
 | Rest | `r2`, rest left and next set's reps, with LAP blinking |
 | Done | `donE` |
 
-Each edit field and control shows its word for 1 s (`Count`, `LEngth`, `SEtS`, `PACE`, `StArt`, `PAUSE`, `rESEt`, `Error`).
+Each edit field and control shows its word for 1 s (`Count`, `LEn`, `SEtS`, `PACE`, `rEAdy`, `PAUSE`, `rESEt`, `Error`).
 
 ### Sounds
 

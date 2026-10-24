@@ -34,7 +34,7 @@ test('invalid idle and start', () => {
 test('lead-in', () => {
   const w = fresh();
   w.tap('A');
-  assert.equal(w.main(), ' StArt');
+  assert.equal(w.main(), ' rEAdy');
   assert.equal(w.day(), 'GO');
   assert.equal(w.colon, false);
   w.advance(1000);

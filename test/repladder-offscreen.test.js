@@ -8,7 +8,7 @@ function fresh() {
   w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
   return w;
 }
-// Beeps of one kind; t is the fake clock in ms.
+// Beeps of one kind.
 function kinds(w, k) { return w.beeps.filter((b) => b.kind === k); }
 const MINUTE = 1 << 8; // E_CLOCK_MINUTE
 
@@ -98,7 +98,6 @@ test('enter during due finish rings on-screen length', () => {
   const before = kinds(w, 'beep').length;
   w.setActive(true);
   assert.equal(w.ctx.state, 2);
-  const before2 = kinds(w, 'beep').length;
   w.advance(20000);
   assert.equal(kinds(w, 'beep').length - before, 30);
 });
