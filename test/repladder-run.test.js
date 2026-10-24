@@ -20,7 +20,7 @@ test('intro', () => {
   assert.equal(w.main(), '100012');
   const p = loadFace('repladder.js');
   p.tap('A');
-  assert.equal(p.main(), ' rEAdy');
+  assert.equal(p.main(), 'LEU 25');
 });
 
 test('no intro while running', () => {
@@ -65,13 +65,40 @@ test('invalid idle and start', () => {
 test('lead-in', () => {
   const w = fresh();
   w.tap('A');
-  assert.equal(w.main(), ' rEAdy');
-  assert.equal(w.day(), 'GO');
+  assert.equal(w.main(), 'rEP100');
+  assert.equal(w.day(), ' 5');
   assert.equal(w.colon, false);
   w.advance(1000);
-  assert.equal(w.main(), '     4');
-  w.advance(3000);
-  assert.equal(w.main(), '     1');
+  assert.equal(w.main(), '1000  ');
+  assert.equal(w.day(), ' 4');
+  assert.equal(w.colon, true);
+  w.advance(1000);
+  assert.equal(w.main(), 'SEtS 5');
+  assert.equal(w.day(), ' 3');
+  w.advance(1000);
+  assert.equal(w.main(), 'PACE 3');
+  assert.equal(w.day(), ' 2');
+  w.advance(1000);
+  assert.equal(w.main(), '    GO');
+  assert.equal(w.day(), ' 1');
+  assert.equal(w.colon, false);
+});
+
+test('lead-in on a level', () => {
+  const w = loadFace('repladder.js');
+  w.advance(1000);
+  w.ctx.setLevel(45);
+  w.tap('A');
+  assert.equal(w.main(), 'LEU 45');
+  w.advance(1000);
+  assert.equal(w.main(), 'rEP 90');
+  w.advance(1000);
+  assert.equal(w.main(), '1000  ');
+  assert.equal(w.colon, true);
+  w.advance(1000);
+  assert.equal(w.main(), 'SEtS 5');
+  w.advance(1000);
+  assert.equal(w.main(), '    GO');
 });
 
 test('work countdown', () => {

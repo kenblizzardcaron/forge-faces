@@ -46,7 +46,7 @@ The first day digit can only show 1–3, so levels live on the main digits.
 
 | Button | Does |
 | --- | --- |
-| **A** (idle) | Start, with a 5 s lead-in |
+| **A** (idle) | Start, with a 5 s lead-in that shows the session |
 | **A** (running) | Pause / resume |
 | **L** (paused) | Reset |
 | **L** (idle) | Edit: LEUEL → GOAL → LEn → done on a level, or LEUEL → Count → LEn → SEtS → PACE → done at level 0 |
@@ -64,12 +64,12 @@ The first day digit can only show 1–3, so levels live on the main digits.
 | Edit LEUEL / GOAL | The number on the main digits, with set 1's reps on the day digits when under 40 (`oFF` at level 0) |
 | Offer | `UP` and the next level on the main digits (`UP  46`) after a ladder finish below the goal |
 | Goal reached | `GOAL` for 3 s when accepting a level reaches the goal |
-| Lead-in | `GO`, then `rEAdy`, 4, 3, 2, 1 |
+| Lead-in | 5 to 1 on the day digits while the main digits spell out the session, one per second: `LEU 45`, `rEP 90`, `10:00`, `SEtS 5`, `GO` (at level 0: `rEP`, time, `SEtS`, `PACE 3`, `GO`) |
 | Work | `S3`, time left and the rep you should be on, counting up once per PACE seconds |
 | Rest | `r2`, rest left and next set's reps, with LAP blinking |
 | Done | `donE` |
 
-Each edit field and control shows its word for 1 s, or until the next press (`LEUEL`, `GOAL`, `Count`, `LEn`, `SEtS`, `PACE`, `rEAdy`, `PAUSE`, `rESEt`, `Error`). At or above the goal, and at level 0, the finish works as before with no offer.
+Each edit field and control shows its word for 1 s, or until the next press (`LEUEL`, `GOAL`, `Count`, `LEn`, `SEtS`, `PACE`, `PAUSE`, `rESEt`, `Error`). At or above the goal, and at level 0, the finish works as before with no offer.
 
 ## Sounds
 

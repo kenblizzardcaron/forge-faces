@@ -16,6 +16,7 @@ var RING_STEP_MS = 125, ringTimer = -1, ringStepNo = 0, ringSteps = 0, cue = 6;
 
 function now() { return new Date().getTime(); }
 function pad(n) { return ('0' + n).slice(-2); }
+function pad3(n) { return ('  ' + n).slice(-3); }
 // m:ss from seconds, with m padded to two chars; reps over 99 blank out.
 function fmtTime(secs) { var m = Math.floor(secs / 60); return (m < 10 ? ' ' : '') + m + pad(secs % 60); }
 function fmtReps(r) { return r > 99 ? '  ' : pad(r); }
@@ -97,9 +98,14 @@ function draw() {
     main = 'UP' + ('    ' + (settings.level + 1)).slice(-4);
     colon = false;
   } else if (state == RUNNING && elapsed() < 0) {
-    var s = Math.ceil(-elapsed() / 1000);
-    day = 'GO';
-    main = s >= 5 ? 'rEAdy' : String(s);
+    // Countdown on the day digits; the main digits spell out the session, one item per second, then GO.
+    var s = Math.ceil(-elapsed() / 1000), lv = settings.level;
+    var items = [lv ? 'LEU' + pad3(lv) : 'rEP' + pad3(settings.total), lv ? 'rEP' + pad3(settings.total) : fmtTime(settings.length) + '  ',
+      lv ? fmtTime(settings.length) + '  ' : 'SEtS ' + settings.sets, lv ? 'SEtS ' + settings.sets : 'PACE' + ('  ' + settings.pace).slice(-2), 'GO'];
+    var k = Math.max(0, Math.min(4, 5 - s));
+    day = ' ' + Math.min(s, 5);
+    main = items[k];
+    colon = (k == 2 && lv) || (k == 1 && !lv);
   } else if (state == RUNNING) {
     var i = phaseAt(current, elapsed()), left = Math.ceil((current.ends[i] - elapsed()) / 1000);
     colon = true;
