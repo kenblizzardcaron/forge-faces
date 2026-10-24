@@ -178,7 +178,7 @@ git commit -m "repladder: session math (rep split and phase ends)"
 | Lead-in, 4…1 s left | `GO` | `'     4'` … `'     1'` | off | off |
 | Work, set k | `Sk` | time left in the block + this set's reps → `' 10622'` | on | off |
 | Rest after set k | `rk` | rest left + next set's reps → `' 11521'` | on | blinks: on when `floor(now()/500)` is even |
-| Done | `'  '` | `' donE'` | off | off |
+| Done | `'  '` | `'  donE'` | off | off |
 | Any flash | unchanged | the word | off | off |
 
 - Time left = `Math.ceil(msLeft / 1000)` seconds.
@@ -192,9 +192,9 @@ git commit -m "repladder: session math (rep split and phase ends)"
   - `lead-in`: tap A → `' StArt'`, day `'GO'`, colon off. Advance 1000 → `'     4'`. Advance 3000 → `'     1'`.
   - `work countdown`: `at(0)` → day `'S1'`, `' 10622'`, colon on. `at(9000)` → `' 05722'`. `at(9500)` → `' 05722'`.
   - `rest and LAP`: `at(65999)` → `' 00122'`. `at(66000)` → day `'r1'`, `' 11521'`, LAP on. `at(66500)` → LAP off. `at(546000)` → day `'S5'`, `' 05418'`, LAP off.
-  - `done`: `at(600000)` → `' donE'`, day `'  '`, colon off. Tap A → `'100022'`.
-  - `one set of 100`: settings `{total:100, length:600, sets:1, pace:3}`, `draw()` → `'1000  '`. Start, `at(0)` → `' 500  '`, day `'S1'`. `at(300000)` → `' donE'`.
-  - `fractional rest`: settings 100/601/4/3. `at(181332)` → day `'r1'`, `' 00126'`. `at(181333)` → day `'S2'`, `' 11826'`. Advancing 250 ms at a time to `at(601000)`, every main reading matches `/^[ \d]{6}$/` until `' donE'`.
+  - `done`: `at(600000)` → `'  donE'`, day `'  '`, colon off. Tap A → `'100022'`.
+  - `one set of 100`: settings `{total:100, length:600, sets:1, pace:3}`, `draw()` → `'1000  '`. Start, `at(0)` → `' 500  '`, day `'S1'`. `at(300000)` → `'  donE'`.
+  - `fractional rest`: settings 100/601/4/3. `at(181332)` → day `'r1'`, `' 00126'`. `at(181333)` → day `'S2'`, `' 11826'`. Advancing 250 ms at a time to `at(601000)`, every main reading matches `/^[ \d]{6}$/` until `'  donE'`.
 
 - [ ] **Step 2: Run them to make sure they fail**
 
