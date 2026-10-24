@@ -98,10 +98,10 @@ function draw() {
     main = 'UP' + ('    ' + (settings.level + 1)).slice(-4);
     colon = false;
   } else if (state == RUNNING && elapsed() < 0) {
-    // Countdown on the day digits; the main digits spell out the session, one item per second, then GO.
+    // Countdown on the day digits; the main digits spell out the session, one item per second, then GO with set 1's reps.
     var s = Math.ceil(-elapsed() / 1000), lv = settings.level;
     var items = ['rEP' + pad3(settings.total), fmtTime(settings.length) + '  ', 'SEtS ' + settings.sets,
-      lv ? 'LEU' + pad3(lv) : 'PACE' + ('  ' + settings.pace).slice(-2), 'GO'];
+      lv ? 'LEU' + pad3(lv) : 'PACE' + ('  ' + settings.pace).slice(-2), 'GO' + ('    ' + current.reps[0]).slice(-4)];
     var k = Math.max(0, Math.min(4, 5 - s));
     day = ' ' + Math.min(s, 5);
     main = items[k];

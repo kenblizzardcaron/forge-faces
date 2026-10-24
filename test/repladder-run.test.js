@@ -79,7 +79,7 @@ test('lead-in', () => {
   assert.equal(w.main(), 'PACE 3');
   assert.equal(w.day(), ' 2');
   w.advance(1000);
-  assert.equal(w.main(), '    GO');
+  assert.equal(w.main(), 'GO  22');
   assert.equal(w.day(), ' 1');
   assert.equal(w.colon, false);
 });
@@ -103,9 +103,19 @@ test('lead-in on a level', () => {
   assert.equal(w.main(), 'LEU 45');
   assert.equal(w.day(), ' 2');
   w.advance(1000);
-  assert.equal(w.main(), '    GO');
+  assert.equal(w.main(), 'GO  20');
   assert.equal(w.day(), ' 1');
   assert.equal(w.colon, false);
+});
+
+test('lead-in GO with one set of 100', () => {
+  const w = loadFace('repladder.js');
+  w.advance(1000);
+  w.ctx.setLevel(100);
+  w.tap('A');
+  w.advance(4000);
+  assert.equal(w.main(), 'GO 100');
+  assert.equal(w.day(), ' 1');
 });
 
 test('work countdown', () => {
