@@ -124,7 +124,7 @@ test('leaving edit stops a held repeat', () => {
   assert.equal(w.ctx.state, 0);
 });
 
-// Ladder face at the default level 45, idle.
+// Ladder face at the default level 25, idle.
 function ladder() {
   const w = loadFace('repladder.js');
   w.advance(1000);
@@ -136,14 +136,14 @@ test('level and goal fields', () => {
   const w = ladder();
   w.tap('L');
   assert.equal(w.main(), ' LEUEL');
-  assert.equal(w.day(), '20');
+  assert.equal(w.day(), '12');
   w.advance(1000);
-  assert.equal(w.main(), '    45');
-  assert.equal(w.day(), '20');
+  assert.equal(w.main(), '    25');
+  assert.equal(w.day(), '12');
   w.tap('A');
-  assert.equal(w.day(), '21');
-  assert.equal(w.main(), '    46');
-  assert.equal(w.ctx.settings.total, 92);
+  assert.equal(w.day(), '13');
+  assert.equal(w.main(), '    26');
+  assert.equal(w.ctx.settings.total, 52);
   w.tap('L');
   assert.equal(w.main(), '  GOAL');
   w.advance(1000);
@@ -153,7 +153,7 @@ test('level and goal fields', () => {
   assert.equal(w.main(), '    10');
   assert.equal(w.day(), ' 6');
   assert.equal(w.ctx.settings.goal, 10);
-  assert.equal(w.ctx.settings.total, 92);
+  assert.equal(w.ctx.settings.total, 52);
   w.tap('L');
   assert.equal(w.main(), '   LEn');
   w.tap('L');
@@ -226,7 +226,7 @@ test('session time on a level', () => {
   assert.equal(w.ctx.settings.length, 615);
   w.tap('L');
   assert.equal(w.ctx.state, 0);
-  assert.equal(w.main(), '101520');
+  assert.equal(w.main(), '101512');
 });
 
 test('base carries through levels', () => {

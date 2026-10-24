@@ -24,6 +24,8 @@ Each face comes as readable source (`name.js`) and a minified build (`name.min.j
 
 To rebuild both faces after editing their source: `npm install terser@5 && node build.js`; run the tests with `node --test`. Top-level names are shortened; the hook names the watch calls and `subscribe` are kept.
 
+To bake your own defaults into a personal build, put them in a `local.json` (gitignored), e.g. `{"repladder": {"level": 45}}`; `node build.js` then also writes `repladder.local.min.js` (gitignored) to upload instead. Keys are the names in the face's `var settings` line, and a misspelled key fails the build.
+
 ## Hosted emulator
 
 [kenblizzardcaron.github.io/forge-faces](https://kenblizzardcaron.github.io/forge-faces/) is Ollee's [Forge emulator](https://github.com/olleewatch/forge_emulator) with a few patches, and this repo's faces under [`faces/`](https://kenblizzardcaron.github.io/forge-faces/faces/).

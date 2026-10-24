@@ -12,9 +12,9 @@ Edit with **L** in idle. **A** raises the value (hold to repeat; it wraps to the
 
 | Field | Default | Range |
 | --- | --- | --- |
-| **LEUEL** (ladder level) | 45 | 0 (off), 10–100 |
+| **LEUEL** (ladder level) | 25 | 0 (off), 10–100 |
 | **GOAL** (level to reach) | 100 | 10–100 |
-| **Count** (total reps) | 90 | 1–999 |
+| **Count** (total reps) | 50 | 1–999 |
 | **LEn** (total time) | 10:00 | 0:15–99:45, 15 s steps; on a level, the session time every rung starts from |
 | **SEtS** (sets) | 5 | 1–9 |
 | **PACE** (seconds per rep) | 3 | 1–20 |
@@ -60,7 +60,7 @@ The first day digit can only show 1–3, so levels live on the main digits.
 | Screen | Shows |
 | --- | --- |
 | Intro | `LAddEr` for 1 s when the face opens idle; any button skips it |
-| Idle | `S1` on the day digits (S for set, so it reads like `51`), total time and set 1's reps on the main digits (`10:00 20`); `Er` when the settings can't work |
+| Idle | `S1` on the day digits (S for set, so it reads like `51`), total time and set 1's reps on the main digits (`10:00 12`); `Er` when the settings can't work |
 | Edit LEUEL / GOAL | The number on the main digits, with set 1's reps on the day digits when under 40 (`oFF` at level 0) |
 | Offer | `UP` and the next level on the main digits (`UP  46`) after a ladder finish below the goal |
 | Goal reached | `GOAL` for 3 s when accepting a level reaches the goal |
@@ -81,4 +81,4 @@ Each edit field and control shows its word for 1 s, or until the next press (`LE
 
 Forge only wakes a background face once a minute, so a change while you're on another face beeps at the next minute tick (one beep, however many changes were missed). The face shows the right time when you come back.
 
-Settings reset to defaults (level 45, goal 100) when the watch reboots or the face is uploaded (Forge has no storage yet). Type your level back in through LEUEL.
+Settings reset to defaults (level 25, goal 100) when the watch reboots or the face is uploaded (Forge has no storage yet). Type your level back in through LEUEL.

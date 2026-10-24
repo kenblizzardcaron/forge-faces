@@ -17,7 +17,7 @@ test('intro', () => {
   assert.equal(w.main(), 'LAddEr');
   assert.equal(w.colon, false);
   w.advance(1000);
-  assert.equal(w.main(), '100020');
+  assert.equal(w.main(), '100012');
   const p = loadFace('repladder.js');
   p.tap('A');
   assert.equal(p.main(), ' rEAdy');
@@ -44,7 +44,7 @@ test('idle on the ladder', () => {
   const w = loadFace('repladder.js');
   w.advance(1000);
   assert.equal(w.day(), 'S1');
-  assert.equal(w.main(), '100020');
+  assert.equal(w.main(), '100012');
   assert.equal(w.colon, true);
 });
 
