@@ -62,12 +62,12 @@ indicators. Proposed layout (builder may refine within these rules):
 
 | State | Day digits | Main digits | Indicators |
 | --- | --- | --- | --- |
-| Idle | blank or `GO` | First set's reps / summary | — |
+| Idle | `S1` (`Er` if invalid) | Total time `m:ss` + set 1 reps | — |
 | Lead-in | `GO` | 5 → 1 countdown | — |
 | Work, set k | `Sk` (e.g. `S3`) | Time left in block `m:ss` + reps this set (e.g. `0:57 21`) | — |
 | Rest after set k | `rk` (e.g. `r2`) | Rest left `m:ss` + next set's reps (e.g. `1:15 20`) | LAP blinks |
 | Paused | as above | frozen | LAP steady/off |
-| Done | `dn` (or similar) | Total push-ups | — |
+| Done | blank | `donE` until any button | — |
 | Editing | — | Field word for ~1 s, then the value being edited | — |
 
 **Readable words (user decision).** Two-letter codes aren't obvious without the docs, so at each
@@ -138,10 +138,10 @@ Borrow multitimer's button conventions:
 ## Calls made by Claude (user may override)
 
 - Face name **Rep Ladder** (`repladder.js`) — chosen by the user.
-- Day-digit labels (`Sk`, `rk`, `GO`, `dn`) and LAP blinking during rest.
+- Day-digit labels (`Sk`, `rk`, `GO`, `Er`) and LAP blinking during rest; sets capped at 9 so `Sk` fits two digits.
 - `LEngth` for total time ("TIME" can't render); no word flash at work↔rest changes.
 - Main digits pair the countdown with this/next set's reps.
-- Total time edited as minutes and seconds, like multitimer.
+- Total time edited as one field in 15 s steps (15 s – 99:45), shown as `m:ss`.
 - Invalid settings refuse to start with an on-screen error.
 
 ## Left to the builder
