@@ -210,6 +210,17 @@ function plan(total, length, sets, pace) {
   }
   return { reps: reps, ends: ends };
 }
+// Set-drop levels; each phase trims LEn 15 s per level from 10:00 (5 sets continue on from level 50).
+var PHASES = [50, 60, 70, 80];
+// 10-50: Count = level x 2. Above 50: Count 100, one set fewer per phase. 99: one set of 100.
+function rung(level) {
+  if (level < 10 || level > 99) return null;
+  if (level <= 50) return { total: 2 * level, length: 600, sets: 5, pace: 3 };
+  if (level === 99) return { total: 100, length: 300, sets: 1, pace: 3 };
+  var k = 0;
+  for (var i = 0; i < PHASES.length; i++) if (PHASES[i] <= level) k = i;
+  return { total: 100, length: 600 - 15 * (level - PHASES[k]), sets: 5 - k, pace: 3 };
+}
 
 // Index of the phase running at ms (first end after ms); ends.length once the session is over.
 function phaseAt(p, ms) {
