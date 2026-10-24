@@ -122,6 +122,8 @@ Levels 1–9 don't exist, since 5 sets need at least 15 reps; the level steps 0,
 
 Level 0 is off: the manual Count, LEn, SEtS and PACE run as before.
 
+The first day digit can only show 1–3, so levels live on the main digits.
+
 ### Buttons
 
 | Button | Does |
@@ -140,9 +142,9 @@ Level 0 is off: the manual Count, LEn, SEtS and PACE run as before.
 | Screen | Shows |
 | --- | --- |
 | Intro | `LAddEr` for 1 s when the face opens idle; any button skips it |
-| Idle | `S1` on the day digits, total time and set 1's reps on the main digits (`10:00 22`); on a level, the level number replaces `S1`; `Er` when the settings can't work |
-| Edit LEUEL / GOAL | The number on the day digits; the main digits preview that rung (`oFF` at level 0) |
-| Offer | The next level on the day digits and `UP` with the levels left to the goal on the main digits (`UP  24`) after a ladder finish below the goal |
+| Idle | `S1` on the day digits, total time and set 1's reps on the main digits (`10:00 22`); `Er` when the settings can't work |
+| Edit LEUEL / GOAL | The number on the main digits, with set 1's reps on the day digits when under 40 (`oFF` at level 0) |
+| Offer | `UP` and the next level on the main digits (`UP  46`) after a ladder finish below the goal |
 | Goal reached | `GOAL` for 3 s when accepting a level reaches the goal |
 | Lead-in | `GO`, then `rEAdy`, 4, 3, 2, 1 |
 | Work | `S3`, time left and the rep you should be on, counting up once per PACE seconds |

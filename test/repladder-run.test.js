@@ -43,7 +43,7 @@ test('idle screen', () => {
 test('idle on the ladder', () => {
   const w = loadFace('repladder.js');
   w.advance(1000);
-  assert.equal(w.day(), '25');
+  assert.equal(w.day(), 'S1');
   assert.equal(w.main(), '100012');
   assert.equal(w.colon, true);
 });

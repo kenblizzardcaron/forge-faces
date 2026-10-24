@@ -77,14 +77,16 @@ function draw() {
   var day = '  ', main = ' donE', colon = false, lap = false;
   if (state == IDLE) {
     var p = plan(settings.total, settings.length, settings.sets, settings.pace);
-    day = settings.level ? String(settings.level) : (p ? 'S1' : 'Er');
+    day = p ? 'S1' : 'Er';
     main = preview(settings);
     colon = true;
   } else if (state == EDIT) {
     var q = plan(settings.total, settings.length, settings.sets, settings.pace), v = settings[FIELDS[field]];
     if (field < 2) {
-      day = String(v);
-      main = v ? preview(rung(v)) : 'oFF';
+      // The first day digit only shows 1-3, so a level's set 1 reps show here only when under 40.
+      var r = v ? rung(v) : null, lr = r ? plan(r.total, r.length, r.sets, r.pace) : null;
+      day = lr && lr.reps[0] < 40 ? String(lr.reps[0]) : '  ';
+      main = v ? String(v) : 'oFF';
       colon = v != 0;
     } else {
       day = q ? fmtReps(q.reps[0]) : 'Er';
@@ -92,8 +94,8 @@ function draw() {
       colon = field == 3;
     }
   } else if (state == OFFER && ringTimer == -1) {
-    day = String(settings.level + 1);
-    main = 'UP  ' + pad(settings.goal - settings.level - 1);
+    day = '  ';
+    main = 'UP  ' + pad(settings.level + 1);
     colon = false;
   } else if (state == RUNNING && elapsed() < 0) {
     var s = Math.ceil(-elapsed() / 1000);

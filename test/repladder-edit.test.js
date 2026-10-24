@@ -136,25 +136,36 @@ test('level and goal fields', () => {
   const w = ladder();
   w.tap('L');
   assert.equal(w.main(), ' LEUEL');
-  assert.equal(w.day(), '25');
+  assert.equal(w.day(), '12');
   w.advance(1000);
-  assert.equal(w.main(), '100012');
+  assert.equal(w.main(), '    25');
+  assert.equal(w.day(), '12');
   w.tap('A');
-  assert.equal(w.day(), '26');
-  assert.equal(w.main(), '100013');
+  assert.equal(w.day(), '13');
+  assert.equal(w.main(), '    26');
   assert.equal(w.ctx.settings.total, 52);
   w.tap('L');
   assert.equal(w.main(), '  GOAL');
   w.advance(1000);
-  assert.equal(w.day(), '50');
-  assert.equal(w.main(), '100022');
+  assert.equal(w.main(), '    50');
+  assert.equal(w.day(), '22');
   w.tap('A');
-  assert.equal(w.main(), ' 94522');
+  assert.equal(w.main(), '    51');
+  assert.equal(w.day(), '22');
   assert.equal(w.ctx.settings.goal, 51);
   assert.equal(w.ctx.settings.total, 52);
   w.tap('L');
   assert.equal(w.ctx.state, 0);
-  assert.equal(w.day(), '26');
+  assert.equal(w.day(), 'S1');
+});
+
+test('two-set rung blanks day', () => {
+  const w = ladder();
+  w.ctx.setLevel(85);
+  w.tap('L');
+  w.advance(1000);
+  assert.equal(w.main(), '    85');
+  assert.equal(w.day(), '  ');
 });
 
 test('level wrap', () => {
@@ -165,10 +176,12 @@ test('level wrap', () => {
   w.tap('A');
   assert.equal(w.ctx.settings.level, 0);
   assert.equal(w.main(), '   oFF');
+  assert.equal(w.day(), '  ');
   assert.deepEqual([w.ctx.settings.total, w.ctx.settings.length, w.ctx.settings.sets], [100, 300, 1]);
   w.tap('A');
   assert.equal(w.ctx.settings.level, 10);
-  assert.equal(w.main(), '100006');
+  assert.equal(w.main(), '    10');
+  assert.equal(w.day(), ' 6');
 });
 
 test('goal wrap', () => {

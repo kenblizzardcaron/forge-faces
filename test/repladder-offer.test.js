@@ -17,13 +17,13 @@ test('offer after finish', () => {
   assert.equal(w.main(), '  donE');
   w.advance(10000);
   assert.equal(w.ctx.state, 4);
-  assert.equal(w.day(), '26');
-  assert.equal(w.main(), 'UP  24');
+  assert.equal(w.day(), '  ');
+  assert.equal(w.main(), 'UP  26');
   w.tap('A');
   assert.equal(w.ctx.state, 0);
   assert.equal(w.ctx.settings.level, 26);
   assert.equal(w.ctx.settings.total, 52);
-  assert.equal(w.day(), '26');
+  assert.equal(w.day(), 'S1');
 });
 
 test('decline keeps the level', () => {
@@ -41,7 +41,7 @@ test('hush', () => {
   w.at(601100);
   w.tap('A');
   assert.equal(w.ctx.settings.level, 25);
-  assert.equal(w.main(), 'UP  24');
+  assert.equal(w.main(), 'UP  26');
   w.tap('A');
   assert.equal(w.ctx.settings.level, 26);
 });
@@ -73,13 +73,13 @@ test('goal reached', () => {
   w.ctx.setLevel(49);
   w.tap('A');
   w.at(610000);
-  assert.equal(w.main(), 'UP  00');
+  assert.equal(w.main(), 'UP  50');
   w.tap('A');
   assert.equal(w.main(), '  GOAL');
   w.advance(2999);
   assert.equal(w.main(), '  GOAL');
   w.advance(1);
-  assert.equal(w.day(), '50');
+  assert.equal(w.day(), 'S1');
   assert.equal(w.main(), '100022');
 });
 
@@ -92,7 +92,7 @@ test('offer off screen', () => {
   w.minute();
   w.advance(10000);
   w.setActive(true);
-  assert.equal(w.main(), 'UP  24');
+  assert.equal(w.main(), 'UP  26');
   w.tap('A');
   assert.equal(w.ctx.settings.level, 26);
 });
