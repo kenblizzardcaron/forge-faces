@@ -84,5 +84,5 @@ test('start after reset is not paused', () => {
   w.tap('A');
   w.advance(5000);
   assert.equal(w.ctx.paused, false);
-  assert.equal(w.main(), ' 10622');
+  assert.equal(w.main(), ' 10601');
 });

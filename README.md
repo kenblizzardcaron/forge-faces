@@ -118,13 +118,14 @@ Reps drop by one per set; when the total doesn't divide evenly, the extra reps g
 
 | Screen | Shows |
 | --- | --- |
+| Intro | `LAddEr` for 1 s when the face opens idle; any button skips it |
 | Idle | `S1` on the day digits, total time and set 1's reps on the main digits (`10:00 22`); `Er` when the settings can't work |
 | Lead-in | `GO`, then `rEAdy`, 4, 3, 2, 1 |
-| Work | `S3`, time left and this set's reps |
+| Work | `S3`, time left and the rep you should be on, counting up once per PACE seconds |
 | Rest | `r2`, rest left and next set's reps, with LAP blinking |
 | Done | `donE` |
 
-Each edit field and control shows its word for 1 s (`Count`, `LEn`, `SEtS`, `PACE`, `rEAdy`, `PAUSE`, `rESEt`, `Error`).
+Each edit field and control shows its word for 1 s, or until the next press (`Count`, `LEn`, `SEtS`, `PACE`, `rEAdy`, `PAUSE`, `rESEt`, `Error`).
 
 ### Sounds
 

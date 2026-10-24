@@ -2,12 +2,33 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { loadFace } = require('../tools/harness');
 
-// Fresh face; at(ms) advances the fake clock until elapsed() equals ms.
+// Fresh face past its 1 s intro; at(ms) advances the fake clock until elapsed() equals ms.
 function fresh() {
   const w = loadFace('repladder.js');
+  w.advance(1000);
   w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
   return w;
 }
+
+test('intro', () => {
+  const w = loadFace('repladder.js');
+  assert.equal(w.main(), 'LAddEr');
+  assert.equal(w.colon, false);
+  w.advance(1000);
+  assert.equal(w.main(), '100022');
+  const p = loadFace('repladder.js');
+  p.tap('A');
+  assert.equal(p.main(), ' rEAdy');
+});
+
+test('no intro while running', () => {
+  const w = fresh();
+  w.tap('A');
+  w.at(2000);
+  w.setActive(false);
+  w.setActive(true);
+  assert.equal(w.main(), ' 10401');
+});
 
 test('idle screen', () => {
   const w = fresh();
@@ -48,12 +69,18 @@ test('work countdown', () => {
   w.tap('A');
   w.at(0);
   assert.equal(w.day(), 'S1');
-  assert.equal(w.main(), ' 10622');
+  assert.equal(w.main(), ' 10601');
   assert.equal(w.colon, true);
+  w.at(2999);
+  assert.equal(w.main(), ' 10401');
+  w.at(3000);
+  assert.equal(w.main(), ' 10302');
   w.at(9000);
-  assert.equal(w.main(), ' 05722');
+  assert.equal(w.main(), ' 05704');
   w.at(9500);
-  assert.equal(w.main(), ' 05722');
+  assert.equal(w.main(), ' 05704');
+  w.at(63000);
+  assert.equal(w.main(), ' 00322');
 });
 
 test('rest and LAP', () => {
@@ -69,7 +96,7 @@ test('rest and LAP', () => {
   assert.equal(w.lap, false);
   w.at(546000);
   assert.equal(w.day(), 'S5');
-  assert.equal(w.main(), ' 05418');
+  assert.equal(w.main(), ' 05401');
   assert.equal(w.lap, false);
 });
 
@@ -91,7 +118,9 @@ test('one set of 100', () => {
   assert.equal(w.main(), '1000  ');
   w.tap('A');
   w.at(0);
-  assert.equal(w.main(), ' 500  ');
+  assert.equal(w.main(), ' 50001');
+  w.at(297000);
+  assert.equal(w.main(), ' 003  ');
   assert.equal(w.day(), 'S1');
   w.at(300000);
   assert.equal(w.main(), '  donE');
@@ -107,7 +136,7 @@ test('fractional rest', () => {
   assert.equal(w.main(), ' 00126');
   w.at(181333);
   assert.equal(w.day(), 'S2');
-  assert.equal(w.main(), ' 11826');
+  assert.equal(w.main(), ' 11801');
   for (let ms = 0; ms <= 601000; ms += 250) {
     w.at(ms);
     if (w.main() === '  donE') {

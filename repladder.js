@@ -82,8 +82,10 @@ function draw() {
     var i = phaseAt(current, elapsed()), left = Math.ceil((current.ends[i] - elapsed()) / 1000);
     colon = true;
     if (i % 2 == 0) {
+      // Work counts reps up, one per pace (settings only change in idle); each change lands on a countdown second.
+      var rep = Math.floor((elapsed() - (i ? current.ends[i - 1] : 0)) / (settings.pace * 1000)) + 1;
       day = 'S' + (i / 2 + 1);
-      main = fmtTime(left) + fmtReps(current.reps[i / 2]);
+      main = fmtTime(left) + fmtReps(Math.min(rep, current.reps[i / 2]));
     } else {
       day = 'r' + ((i + 1) / 2);
       main = fmtTime(left) + fmtReps(current.reps[(i + 1) / 2]);
@@ -121,11 +123,12 @@ function start() {
   current = p; state = RUNNING; startAt = now() + 5000; paused = false; lastPhase = -1; cue = 6;
 }
 
+// Entering idle shows the face name for 1 s; a running session goes straight to its countdown.
 function enter() {
   Ollee.clear();
   displayTimer = -1;
   catchUp();
-  draw();
+  if (state == IDLE) flash('LAddEr'); else draw();
 }
 // The platform cancels timers when the face leaves the screen.
 function exit() { displayTimer = -1; ringTimer = -1; repeatTimer = -1; }
@@ -164,6 +167,8 @@ function button(b, e) {
   if (b == B_A) stopRepeat();
   // longFired is only set by A, so an L release while A is held is not swallowed.
   var longPress = b == B_A && longFired;
+  // A press ends any word on screen, the intro included, so its own screen shows at once.
+  if (!longPress) messageUntil = 0;
   if (!longPress) {
     if (state == DONE) state = IDLE;
     else if (state == IDLE && b == B_A) start();
@@ -193,13 +198,13 @@ function plan(total, length, sets, pace) {
   // Rest is spread so the final end lands exactly on length.
   var restMs = n > 1 ? (length - total * pace) * 1000 / (n - 1) : 0;
   var ends = [];
-  var prev = 0, cumWork = 0;
+  var prev = 0, workSecs = 0;
   for (var i = 0; i < n; i++) {
-    cumWork += reps[i] * pace;
+    workSecs += reps[i] * pace;
     prev += reps[i] * pace * 1000;
     ends.push(prev);
     if (i < n - 1) {
-      prev = Math.round(cumWork * 1000 + (i + 1) * restMs);
+      prev = Math.round(workSecs * 1000 + (i + 1) * restMs);
       ends.push(prev);
     }
   }
