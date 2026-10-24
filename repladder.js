@@ -6,6 +6,8 @@ var settings = { total: 100, length: 600, sets: 5, pace: 3 };
 var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3;
 var state = IDLE, startAt = 0, paused = false, pausedAt = 0, current = null, lastPhase = -1, message = '', messageUntil = 0;
 var displayTimer = -1, longFired = 0;
+// Finish ring: stock triple, 125 ms steps, beeping on steps 0-2 of each 8; own timer slot.
+var RING_STEP_MS = 125, ringTimer = -1, ringStepNo = 0, ringSteps = 0, cue = 6;
 
 function now() { return new Date().getTime(); }
 function pad(n) { return ('0' + n).slice(-2); }
@@ -19,16 +21,33 @@ function flash(word) { message = word; messageUntil = now() + 1000; draw(); }
 function secondStep(msLeft) { return msLeft - 1000 * (Math.ceil(msLeft / 1000) - 1); }
 function earliest(d, x) { return d && d < x ? d : x; }
 
-// Sets state to DONE once the last phase ends. Task 4 adds the sounds here.
+// One beep per work/rest change; the last phase end rings the finish and sets DONE.
 function onPhase(i) {
   lastPhase = i;
-  if (i == current.ends.length) state = DONE;
+  if (i == current.ends.length) { state = DONE; startRing(Ollee.active()); return; }
+  Ollee.beep();
 }
-// Catches up with the clock: fires onPhase once when the phase index moves.
+// Catches up with the clock: a short beep per lead-in second, then fires onPhase when the phase index moves.
 function sync() {
   if (state != RUNNING) return;
   var e = elapsed(), i = e < 0 ? -1 : phaseAt(current, e);
+  // Lead-in cues land on schedule()'s whole-second wakeups, at 5..1 s before set 1.
+  if (e < 0 && Math.ceil(-e / 1000) < cue) { cue = Math.ceil(-e / 1000); Ollee.beepShort(); }
   if (i != lastPhase) onPhase(i);
+}
+// 10 periods (80 steps) on screen, 5 off screen.
+function startRing(onScreen) {
+  ringStepNo = 0; ringSteps = onScreen ? 80 : 40;
+  ringStep();
+}
+function ringStep() {
+  ringTimer = -1;
+  if (ringStepNo % 8 < 3) Ollee.beep();
+  if (++ringStepNo < ringSteps) ringTimer = Ollee.setTimeout(ringStep, RING_STEP_MS);
+}
+function stopRing() {
+  if (ringTimer != -1) Ollee.clearTimeout(ringTimer);
+  ringTimer = -1;
 }
 
 function draw() {
@@ -83,7 +102,7 @@ function redraw() { displayTimer = -1; draw(); }
 function start() {
   var p = plan(settings.total, settings.length, settings.sets, settings.pace);
   if (!p) { flash('Error'); return; }
-  current = p; state = RUNNING; startAt = now() + 5000; paused = false; lastPhase = -1;
+  current = p; state = RUNNING; startAt = now() + 5000; paused = false; lastPhase = -1; cue = 6;
 }
 
 function enter() {
@@ -92,11 +111,12 @@ function enter() {
   draw();
 }
 // The platform cancels timers when the face leaves the screen.
-function exit() { displayTimer = -1; }
+function exit() { displayTimer = -1; ringTimer = -1; }
 
 function a_long() { longFired = 1; }
-// Acts on release unless the long press fired. In DONE any button returns to IDLE.
+// Any press silences a ringing finish. Acts on release unless the long press fired; in DONE any button returns to IDLE.
 function button(b, e) {
+  if (ringTimer != -1) stopRing();
   if (e != E_UP) return;
   if (!longFired) {
     if (state == DONE) state = IDLE;
