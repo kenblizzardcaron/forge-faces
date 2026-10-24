@@ -26,7 +26,7 @@ function flash(word, ms) { message = word; messageUntil = now() + (ms || 1000); 
 function secondStep(msLeft) { return msLeft - 1000 * (Math.ceil(msLeft / 1000) - 1); }
 function earliest(d, x) { return d && d < x ? d : x; }
 
-// One beep per work/rest change; the last phase end rings the finish and sets DONE.
+// One beep per work/rest change; the last phase end rings the finish and sets OFFER below the goal, else DONE.
 function onPhase(i) {
   lastPhase = i;
   if (i == current.ends.length) {
@@ -65,7 +65,7 @@ function stopRing() {
   ringTimer = -1;
 }
 
-// Idle main text: work length, then set 1's reps; blank when the plan is invalid.
+// Idle main text: total time, then set 1's reps; blank reps when the plan is invalid.
 function preview(s) {
   var p = plan(s.total, s.length, s.sets, s.pace);
   return fmtTime(s.length) + (p ? fmtReps(p.reps[0]) : '  ');
