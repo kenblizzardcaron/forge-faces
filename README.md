@@ -3,10 +3,10 @@
 Custom watch faces for the [Ollee Watch](https://www.olleewatch.com), written for
 [Ollee Watch Forge](https://github.com/olleewatch/forge_emulator), the watch's built-in JavaScript platform.
 
-| Face (guide) | Try it | What it does |
-| --- | --- | --- |
-| [multitimer](multitimer.md) (upload [multitimer.min.js](multitimer.min.js)) | [Open in emulator](https://kenblizzardcaron.github.io/forge-faces/?face=multitimer) | Feature-parity replacement for the official TIMER face, with up to three timers running at once. |
-| [repladder](repladder.md) (upload [repladder.min.js](repladder.min.js)) | [Open in emulator](https://kenblizzardcaron.github.io/forge-faces/?face=repladder) | Declining-rep workout timer: reps split across sets, one fewer each set, with rest only between sets. |
+| Face | Guide | Try it | What it does |
+| --- | --- | --- | --- |
+| [multitimer.js](multitimer.js) (upload [multitimer.min.js](multitimer.min.js)) | [multitimer.md](multitimer.md) | [Open in emulator](https://kenblizzardcaron.github.io/forge-faces/?face=multitimer) | Feature-parity replacement for the official TIMER face, with up to three timers running at once. |
+| [repladder.js](repladder.js) (upload [repladder.min.js](repladder.min.js)) | [repladder.md](repladder.md) | [Open in emulator](https://kenblizzardcaron.github.io/forge-faces/?face=repladder) | Declining-rep workout timer: reps split across sets, one fewer each set, with rest only between sets. |
 
 ## Try a face
 
