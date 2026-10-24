@@ -64,7 +64,7 @@ The first day digit can only show 1–3, so levels live on the main digits.
 | Edit LEUEL / GOAL | The number on the main digits, with set 1's reps on the day digits when under 40 (`oFF` at level 0) |
 | Offer | `UP` and the next level on the main digits (`UP  46`) after a ladder finish below the goal |
 | Goal reached | `GOAL` for 3 s when accepting a level reaches the goal |
-| Lead-in | 5 to 1 on the day digits while the main digits spell out the session, one per second: `LEU 45`, `rEP 90`, `10:00`, `SEtS 5`, `GO` (at level 0: `rEP`, time, `SEtS`, `PACE 3`, `GO`) |
+| Lead-in | 5 to 1 on the day digits while the main digits spell out the session, one per second: `rEP 90`, `10:00`, `SEtS 5`, `LEU 45`, `GO` (at level 0, `PACE 3` in place of the level) |
 | Work | `S3`, time left and the rep you should be on, counting up once per PACE seconds |
 | Rest | `r2`, rest left and next set's reps, with LAP blinking |
 | Done | `donE` |

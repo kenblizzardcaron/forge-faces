@@ -100,12 +100,12 @@ function draw() {
   } else if (state == RUNNING && elapsed() < 0) {
     // Countdown on the day digits; the main digits spell out the session, one item per second, then GO.
     var s = Math.ceil(-elapsed() / 1000), lv = settings.level;
-    var items = [lv ? 'LEU' + pad3(lv) : 'rEP' + pad3(settings.total), lv ? 'rEP' + pad3(settings.total) : fmtTime(settings.length) + '  ',
-      lv ? fmtTime(settings.length) + '  ' : 'SEtS ' + settings.sets, lv ? 'SEtS ' + settings.sets : 'PACE' + ('  ' + settings.pace).slice(-2), 'GO'];
+    var items = ['rEP' + pad3(settings.total), fmtTime(settings.length) + '  ', 'SEtS ' + settings.sets,
+      lv ? 'LEU' + pad3(lv) : 'PACE' + ('  ' + settings.pace).slice(-2), 'GO'];
     var k = Math.max(0, Math.min(4, 5 - s));
     day = ' ' + Math.min(s, 5);
     main = items[k];
-    colon = lv ? k == 2 : k == 1;
+    colon = k == 1;
   } else if (state == RUNNING) {
     var i = phaseAt(current, elapsed()), left = Math.ceil((current.ends[i] - elapsed()) / 1000);
     colon = true;
