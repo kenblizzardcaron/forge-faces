@@ -87,7 +87,6 @@ function draw() {
       var r = v ? rung(v) : null, lr = r ? plan(r.total, r.length, r.sets, r.pace) : null;
       day = lr && lr.reps[0] < 40 ? String(lr.reps[0]) : '  ';
       main = v ? String(v) : 'oFF';
-      colon = v != 0;
     } else {
       day = q ? fmtReps(q.reps[0]) : 'Er';
       main = field == 3 ? fmtTime(settings.length) + '  ' : ('      ' + v).slice(-6);

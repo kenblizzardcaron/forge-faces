@@ -165,6 +165,7 @@ test('two-set rung blanks day', () => {
   w.tap('L');
   w.advance(1000);
   assert.equal(w.main(), '    85');
+  assert.equal(w.colon, false);
   assert.equal(w.day(), '  ');
 });
 
