@@ -77,10 +77,10 @@ plain 7-segment (no M, W, or capital T/R), so words use lowercase where needed:
 | Moment | Word ~1 s | Then |
 | --- | --- | --- |
 | Edit total reps | `Count` | e.g. `100` |
-| Edit total time | `LEngth` | e.g. `10:00` |
+| Edit total time | `LEn` | e.g. `10:00` |
 | Edit sets | `SEtS` | e.g. `5` |
 | Edit seconds per rep | `PACE` | e.g. `3` |
-| Start | `StArt` | lead-in 5 → 1 |
+| Start | `rEAdy` | lead-in 5 → 1 |
 | Pause | `PAUSE` | frozen countdown |
 | Reset | `rESEt` | idle screen |
 | Last set done | `donE` | stays |
@@ -139,7 +139,7 @@ Borrow multitimer's button conventions:
 
 - Face name **Rep Ladder** (`repladder.js`) — chosen by the user.
 - Day-digit labels (`Sk`, `rk`, `GO`, `Er`) and LAP blinking during rest; sets capped at 9 so `Sk` fits two digits.
-- `LEngth` for total time ("TIME" can't render); no word flash at work↔rest changes.
+- `LEn` for total time ("TIME" can't render); no word flash at work↔rest changes.
 - Main digits pair the countdown with this/next set's reps.
 - Total time edited as one field in 15 s steps (15 s – 99:45), shown as `m:ss`.
 - Invalid settings refuse to start with an on-screen error.

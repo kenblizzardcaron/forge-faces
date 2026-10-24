@@ -19,9 +19,9 @@ Every task 1–7 is a mechanical unit for a **`model: haiku` subagent** on branc
 - ES5 only in `repladder.js`: `var` and `function`; no arrow functions, `let`, template strings, `padStart` or classes. The single exception is `const subscribe = ...;`, as in multitimer.
 - Time comes from `function now() { return new Date().getTime(); }`, as in multitimer. The harness fakes `Date`.
 - Main digits are plain 7-segment, `HH:MM SS` layout (colon between digit 2 and 3). `drawMain` keeps the first 6 chars, right-aligned; `drawDay` keeps the first 2.
-- The exact words, with this casing: `Count`, `LEngth`, `SEtS`, `PACE`, `StArt`, `PAUSE`, `rESEt`, `donE`, `Error`.
+- The exact words, with this casing: `Count`, `LEn`, `SEtS`, `PACE`, `rEAdy`, `PAUSE`, `rESEt`, `donE`, `Error`.
 - Defaults: total 100 reps, length 600 s, 5 sets, pace 3 s.
-- Edit ranges, which wrap to the minimum after the maximum: Count 1–999 step 1; LEngth 15–5985 s step 15; SEtS 1–9; PACE 1–20 s.
+- Edit ranges, which wrap to the minimum after the maximum: Count 1–999 step 1; LEn 15–5985 s step 15; SEtS 1–9; PACE 1–20 s.
 - At most 4 timer slots (`setTimeout`/`setInterval` share them).
 - The minified `repladder.min.js` must be ≤ 8158 bytes.
 - Every `*.js` in the repo root is copied to the hosted site, so the harness lives in `tools/` and tests in `test/`.
@@ -174,7 +174,7 @@ git commit -m "repladder: session math (rep split and phase ends)"
 | --- | --- | --- | --- | --- |
 | Idle, valid | `S1` | length `m:ss` + set 1 reps → `'100022'` | on | off |
 | Idle, invalid | `Er` | length only → `'1000  '` | on | off |
-| Lead-in, 5th second | `GO` | `' StArt'` | off | off |
+| Lead-in, 5th second | `GO` | `' rEAdy'` | off | off |
 | Lead-in, 4…1 s left | `GO` | `'     4'` … `'     1'` | off | off |
 | Work, set k | `Sk` | time left in the block + this set's reps → `' 10622'` | on | off |
 | Rest after set k | `rk` | rest left + next set's reps → `' 11521'` | on | blinks: on when `floor(now()/500)` is even |
@@ -189,7 +189,7 @@ git commit -m "repladder: session math (rep split and phase ends)"
 - [ ] **Step 1: Write the failing tests** (defaults unless stated; `t0` = tap A; `at(ms)` = advance so `elapsed()` equals `ms`):
   - `idle screen`: day `'S1'`, main `'100022'`, colon on, LAP off.
   - `invalid idle and start`: set `ctx.settings.total = 5; ctx.settings.sets = 9; ctx.draw()` → day `'Er'`, main `'1000  '`. Tap A → main `' Error'`, `ctx.state === 0`. Advance 1000 → `'1000  '`.
-  - `lead-in`: tap A → `' StArt'`, day `'GO'`, colon off. Advance 1000 → `'     4'`. Advance 3000 → `'     1'`.
+  - `lead-in`: tap A → `' rEAdy'`, day `'GO'`, colon off. Advance 1000 → `'     4'`. Advance 3000 → `'     1'`.
   - `work countdown`: `at(0)` → day `'S1'`, `' 10622'`, colon on. `at(9000)` → `' 05722'`. `at(9500)` → `' 05722'`.
   - `rest and LAP`: `at(65999)` → `' 00122'`. `at(66000)` → day `'r1'`, `' 11521'`, LAP on. `at(66500)` → LAP off. `at(546000)` → day `'S5'`, `' 05418'`, LAP off.
   - `done`: `at(600000)` → `'  donE'`, day `'  '`, colon off. Tap A → `'100022'`.
@@ -301,14 +301,14 @@ git commit -m "repladder: pause, resume and reset"
 
 **Interfaces:**
 - Consumes: `settings`, `plan`, `flash`, `state`, `EDIT` (Tasks 2–3).
-- Produces: `var field = 0;`, which indexes `FIELDS = ['total', 'length', 'sets', 'pace']` with words `['Count', 'LEngth', 'SEtS', 'PACE']`.
+- Produces: `var field = 0;`, which indexes `FIELDS = ['total', 'length', 'sets', 'pace']` with words `['Count', 'LEn', 'SEtS', 'PACE']`.
 - Behaviour: L in IDLE enters EDIT at `field 0`; each L moves to the next field and flashes its word; L after PACE returns to IDLE (no flash). A increments the current field by its step and wraps to the minimum after the maximum (ranges in Global Constraints). Holding A repeats every 100 ms after `a_long` until release. Edit is reachable from IDLE only.
 
 **Display while editing:** the day digits show set 1's reps (padded to 2), or `Er` if `plan()` is null. The main digits show the field's word for 1 s, then the value: total `'   100'`; length as `m:ss` with blank reps (`'1000  '`, `' 500  '`), colon on; sets `'     5'`; pace `'     3'`.
 
 - [ ] **Step 1: Write the failing tests:**
-  - `walk the fields`: tap L → `' Count'`, day `'22'`; advance 1000 → `'   100'`. Tap A → `'   101'`, day `'23'`. Tap L → `'LEngth'`; advance 1000 → `'1000  '`, colon on; tap A → `'1015  '`. Tap L → `'  SEtS'` then `'     5'`. Tap L → `'  PACE'` then `'     3'`. Tap L → `state === 0`, main `'101523'`.
-  - `wrap`: in Count, set `ctx.settings.total = 999`, tap A → `'     1'`. In SEtS at 9, tap A → `'     1'`. In LEngth at 5985, tap A → `' 015  '`.
+  - `walk the fields`: tap L → `' Count'`, day `'22'`; advance 1000 → `'   100'`. Tap A → `'   101'`, day `'23'`. Tap L → `'LEn'`; advance 1000 → `'1000  '`, colon on; tap A → `'1015  '`. Tap L → `'  SEtS'` then `'     5'`. Tap L → `'  PACE'` then `'     3'`. Tap L → `state === 0`, main `'101523'`.
+  - `wrap`: in Count, set `ctx.settings.total = 999`, tap A → `'     1'`. In SEtS at 9, tap A → `'     1'`. In LEn at 5985, tap A → `' 015  '`.
   - `hold repeats`: in Count at 100, `hold('A', 2000)` → value between 105 and 125.
   - `Er while editing`: total 5 and sets 9 → day `'Er'`.
   - `no edit while running`: start, tap L → `state === 1`.
@@ -406,5 +406,5 @@ git commit -m "repladder: build both faces, README section"
 ### Task 9: Visual check in the emulator (controller only, not delegated)
 
 - [ ] Build the site locally with `tools/build-site.sh <scratch>/site` and serve it with `python3 -m http.server` (backgrounded). Open `/?face=repladder`, by headless Chromium screenshot if available; otherwise ask the user to open it on the iPad (Safari to the Pi's LAN address, or VNC).
-- [ ] Confirm by eye that every word renders legibly on the real LCD glyphs: `Count`, `LEngth`, `SEtS`, `PACE`, `StArt`, `PAUSE`, `rESEt`, `donE`, `Error`, `GO`, `S1`, `r1`, `Er`. Also check that `m:ss rr` sits correctly around the colon and that LAP blinks during rest.
+- [ ] Confirm by eye that every word renders legibly on the real LCD glyphs: `Count`, `LEn`, `SEtS`, `PACE`, `rEAdy`, `PAUSE`, `rESEt`, `donE`, `Error`, `GO`, `S1`, `r1`, `Er`. Also check that `m:ss rr` sits correctly around the colon and that LAP blinks during rest.
 - [ ] Any word that reads badly is a copy change: update the Global Constraints word list and the tests, then rebuild.
