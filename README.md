@@ -118,6 +118,8 @@ A level above 0 sets Count, LEn, SEtS and PACE from this ladder. Every rung uses
 | 80–99 | 2 | 100 | 10:00 → 5:15 | LEn − 15 s per level (80 resets to 10:00) |
 | 100 | 1 | 100 | 5:00 | one set of 100 |
 
+The times above assume the default LEn of 10:00; a different LEn shifts every rung but level 100 by the same amount.
+
 Levels 1–9 don't exist, since 5 sets need at least 15 reps; the level steps 0, 10, 11, … 100 and wraps to 0.
 
 Level 0 is off: the manual Count, LEn, SEtS and PACE run as before.

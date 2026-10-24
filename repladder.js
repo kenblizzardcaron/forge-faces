@@ -182,7 +182,7 @@ function bump() {
   else if (onLevel) { settings.base = v; setLevel(settings.level); }
   else settings[key] = v;
 }
-// L in EDIT: Level, Goal, LEn (on a level), then the manual fields; Goal skips them at level 0, and Pace or LEn on a level leaves EDIT.
+// L in EDIT: on a level, Level -> Goal -> LEn -> idle; at level 0, Level -> Count -> LEn -> SEtS -> PACE -> idle.
 function nextField() {
   var f = field + 1;
   if (field == 0 && !settings.level) f = 2;
