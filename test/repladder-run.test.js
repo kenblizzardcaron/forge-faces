@@ -6,6 +6,8 @@ const { loadFace } = require('../tools/harness');
 function fresh() {
   const w = loadFace('repladder.js');
   w.advance(1000);
+  w.ctx.settings = { level: 0, goal: 50, total: 100, length: 600, sets: 5, pace: 3 };
+  w.ctx.draw();
   w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
   return w;
 }
@@ -15,7 +17,7 @@ test('intro', () => {
   assert.equal(w.main(), 'LAddEr');
   assert.equal(w.colon, false);
   w.advance(1000);
-  assert.equal(w.main(), '100022');
+  assert.equal(w.main(), '100012');
   const p = loadFace('repladder.js');
   p.tap('A');
   assert.equal(p.main(), ' rEAdy');
@@ -36,6 +38,14 @@ test('idle screen', () => {
   assert.equal(w.main(), '100022');
   assert.equal(w.colon, true);
   assert.equal(w.lap, false);
+});
+
+test('idle on the ladder', () => {
+  const w = loadFace('repladder.js');
+  w.advance(1000);
+  assert.equal(w.day(), '25');
+  assert.equal(w.main(), '100012');
+  assert.equal(w.colon, true);
 });
 
 test('invalid idle and start', () => {
@@ -113,7 +123,7 @@ test('done', () => {
 
 test('one set of 100', () => {
   const w = fresh();
-  w.ctx.settings = { total: 100, length: 600, sets: 1, pace: 3 };
+  w.ctx.settings = { level: 0, goal: 50, total: 100, length: 600, sets: 1, pace: 3 };
   w.ctx.draw();
   assert.equal(w.main(), '1000  ');
   w.tap('A');
@@ -128,7 +138,7 @@ test('one set of 100', () => {
 
 test('fractional rest', () => {
   const w = fresh();
-  w.ctx.settings = { total: 100, length: 601, sets: 4, pace: 3 };
+  w.ctx.settings = { level: 0, goal: 50, total: 100, length: 601, sets: 4, pace: 3 };
   w.ctx.draw();
   w.tap('A');
   w.at(181332);

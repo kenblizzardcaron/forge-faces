@@ -1,7 +1,7 @@
 // Rep Ladder: a set-by-set rep ladder timer with a work/rest session plan.
 // Upload repladder.min.js, the built copy of this file.
 const subscribe = E_BUTTONS + E_A_LONG;
-var settings = { total: 100, length: 600, sets: 5, pace: 3 };
+var settings = { level: 25, goal: 50, total: 50, length: 600, sets: 5, pace: 3 };
 
 var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3;
 var state = IDLE, startAt = 0, paused = false, pausedAt = 0, current = null, lastPhase = -1, message = '', messageUntil = 0;
@@ -60,14 +60,20 @@ function stopRing() {
   ringTimer = -1;
 }
 
+// Idle main text: work length, then set 1's reps; blank when the plan is invalid.
+function preview(s) {
+  var p = plan(s.total, s.length, s.sets, s.pace);
+  return fmtTime(s.length) + (p ? fmtReps(p.reps[0]) : '  ');
+}
+
 function draw() {
   if (!Ollee.active()) return;
   sync();
   var day = '  ', main = ' donE', colon = false, lap = false;
   if (state == IDLE) {
     var p = plan(settings.total, settings.length, settings.sets, settings.pace);
-    day = p ? 'S1' : 'Er';
-    main = fmtTime(settings.length) + (p ? fmtReps(p.reps[0]) : '  ');
+    day = settings.level ? String(settings.level) : (p ? 'S1' : 'Er');
+    main = preview(settings);
     colon = true;
   } else if (state == EDIT) {
     var q = plan(settings.total, settings.length, settings.sets, settings.pace);
