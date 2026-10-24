@@ -1,5 +1,7 @@
 # Rep Ladder levels — design
 
+Revised 2026-10-24: levels moved to the main digits, top level 100, default goal 100.
+
 ## Intent
 
 The user does Rep Ladder sessions to rebuild and then extend push-up capacity. Today they manage
@@ -16,7 +18,7 @@ to step back, and a goal they can change along the way.
 - **Ladder on by default, with an opt-out** (user decision). The face starts at **level 25**
   (50 push-ups in 5 sets over 10:00), a fair start for an average adult. Level 0 means off:
   Count, LEn, SEtS and PACE are edited by hand exactly as today.
-- **A goal**, itself a level. Default goal: **level 50** (100 in 5 sets over 10:00).
+- **A goal**, itself a level. Default goal: **level 100** (100 in one set).
 - **After a completed session below the goal**, the face offers the next level. **A** accepts,
   **L** keeps the current level. Nothing changes without an explicit yes.
 - **Stepping back** is done by editing the level number.
@@ -49,8 +51,8 @@ Every rung uses PACE 3. Work time is Count × 3 s. Rest is split as today.
 | 51–59 | 5 | 100 | 9:45 → 7:45 | −15 s |
 | 60–69 | 4 | 100 | 10:00 → 7:45 | −15 s (60 resets to 10:00) |
 | 70–79 | 3 | 100 | 10:00 → 7:45 | −15 s (70 resets to 10:00) |
-| 80–98 | 2 | 100 | 10:00 → 5:30 | −15 s (80 resets to 10:00) |
-| 99 | 1 | 100 | 5:00 | the lofty goal: one set ends at Count × PACE, so LEn is set to match |
+| 80–99 | 2 | 100 | 10:00 → 5:15 | −15 s (80 resets to 10:00) |
+| 100 | 1 | 100 | 5:00 | the lofty goal: one set of 100 at PACE 3 |
 
 Key rungs: 25 = 50 push-ups (default start), 45 = 90 (the user today), 50 = 100 in 5 sets
 (default goal), 60 = 100 in 4 sets over 10:00, 99 = 100 in one set. Each set drop lands on a

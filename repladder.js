@@ -1,7 +1,7 @@
 // Rep Ladder: a set-by-set rep ladder timer with a work/rest session plan.
 // Upload repladder.min.js, the built copy of this file.
 const subscribe = E_BUTTONS + E_A_LONG;
-var settings = { level: 25, goal: 50, total: 50, length: 600, sets: 5, pace: 3 };
+var settings = { level: 25, goal: 100, total: 50, length: 600, sets: 5, pace: 3 };
 
 var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3, OFFER = 4;
 var state = IDLE, startAt = 0, paused = false, pausedAt = 0, current = null, lastPhase = -1, message = '', messageUntil = 0;
@@ -9,7 +9,7 @@ var displayTimer = -1, longFired = 0, hush = 0;
 // Edit: L cycles fields; A steps the current one, and holding A repeats every 100 ms on its own slot.
 var FIELDS = ['level', 'goal', 'total', 'length', 'sets', 'pace'];
 var WORDS = ['LEUEL', 'GOAL', 'Count', 'LEn', 'SEtS', 'PACE'];
-var LIMITS = [[0, 99, 1], [10, 99, 1], [1, 999, 1], [15, 5985, 15], [1, 9, 1], [1, 20, 1]];
+var LIMITS = [[0, 100, 1], [10, 100, 1], [1, 999, 1], [15, 5985, 15], [1, 9, 1], [1, 20, 1]];
 var field = 0, repeatTimer = -1;
 // Finish ring: stock triple, 125 ms steps, beeping on steps 0-2 of each 8; own timer slot.
 var RING_STEP_MS = 125, ringTimer = -1, ringStepNo = 0, ringSteps = 0, cue = 6;
@@ -94,7 +94,7 @@ function draw() {
     }
   } else if (state == OFFER && ringTimer == -1) {
     day = '  ';
-    main = 'UP  ' + pad(settings.level + 1);
+    main = 'UP' + ('    ' + (settings.level + 1)).slice(-4);
     colon = false;
   } else if (state == RUNNING && elapsed() < 0) {
     var s = Math.ceil(-elapsed() / 1000);
@@ -261,11 +261,11 @@ function plan(total, length, sets, pace) {
 }
 // Set-drop levels; each phase trims LEn 15 s per level from 10:00 (5 sets continue on from level 50).
 var PHASES = [50, 60, 70, 80];
-// 10-50: Count = level x 2. Above 50: Count 100, one set fewer per phase. 99: one set of 100.
+// 10-50: Count = level x 2. Above 50: Count 100, one set fewer per phase. 100: one set of 100.
 function rung(level) {
-  if (level < 10 || level > 99) return null;
+  if (level < 10 || level > 100) return null;
   if (level <= 50) return { total: 2 * level, length: 600, sets: 5, pace: 3 };
-  if (level === 99) return { total: 100, length: 300, sets: 1, pace: 3 };
+  if (level === 100) return { total: 100, length: 300, sets: 1, pace: 3 };
   var k = 0;
   for (var i = 0; i < PHASES.length; i++) if (PHASES[i] <= level) k = i;
   return { total: 100, length: 600 - 15 * (level - PHASES[k]), sets: 5 - k, pace: 3 };

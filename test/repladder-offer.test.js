@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { loadFace } = require('../tools/harness');
 
-// Fresh face past the intro (default level 25, goal 50); at(ms) advances until elapsed() equals ms.
+// Fresh face past the intro (default level 25, goal 100); at(ms) advances until elapsed() equals ms.
 function fresh() {
   const w = loadFace('repladder.js');
   w.advance(1000);
@@ -59,6 +59,7 @@ test('no offer after reset', () => {
 
 test('at goal', () => {
   const w = fresh();
+  w.ctx.settings.goal = 50;
   w.ctx.setLevel(50);
   w.tap('A');
   w.at(610000);
@@ -70,6 +71,7 @@ test('at goal', () => {
 
 test('goal reached', () => {
   const w = fresh();
+  w.ctx.settings.goal = 50;
   w.ctx.setLevel(49);
   w.tap('A');
   w.at(610000);
@@ -81,6 +83,17 @@ test('goal reached', () => {
   w.advance(1);
   assert.equal(w.day(), 'S1');
   assert.equal(w.main(), '100022');
+});
+
+test('offer to 100', () => {
+  const w = fresh();
+  w.ctx.setLevel(99);
+  w.tap('A');
+  w.at(325000);
+  assert.equal(w.main(), 'UP 100');
+  w.tap('A');
+  assert.equal(w.main(), '  GOAL');
+  assert.equal(w.ctx.settings.level, 100);
 });
 
 test('offer off screen', () => {

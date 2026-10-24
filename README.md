@@ -96,8 +96,8 @@ Edit with **L** in idle. **A** raises the value (hold to repeat; it wraps to the
 
 | Field | Default | Range |
 | --- | --- | --- |
-| **LEUEL** (ladder level) | 25 | 0 (off), 10–99 |
-| **GOAL** (level to reach) | 50 | 10–99 |
+| **LEUEL** (ladder level) | 25 | 0 (off), 10–100 |
+| **GOAL** (level to reach) | 100 | 10–100 |
 | **Count** (total reps) | 50 | 1–999 |
 | **LEn** (total time) | 10:00 | 0:15–99:45, 15 s steps |
 | **SEtS** (sets) | 5 | 1–9 |
@@ -115,10 +115,10 @@ A level above 0 sets Count, LEn, SEtS and PACE from this ladder. Every rung uses
 | 51–59 | 5 | 100 | 9:45 → 7:45 | −15 s |
 | 60–69 | 4 | 100 | 10:00 → 7:45 | −15 s (60 resets to 10:00) |
 | 70–79 | 3 | 100 | 10:00 → 7:45 | −15 s (70 resets to 10:00) |
-| 80–98 | 2 | 100 | 10:00 → 5:30 | −15 s (80 resets to 10:00) |
-| 99 | 1 | 100 | 5:00 | one set of 100 |
+| 80–99 | 2 | 100 | 10:00 → 5:15 | −15 s (80 resets to 10:00) |
+| 100 | 1 | 100 | 5:00 | one set of 100 |
 
-Levels 1–9 don't exist, since 5 sets need at least 15 reps; the level steps 0, 10, 11, … 99 and wraps to 0.
+Levels 1–9 don't exist, since 5 sets need at least 15 reps; the level steps 0, 10, 11, … 100 and wraps to 0.
 
 Level 0 is off: the manual Count, LEn, SEtS and PACE run as before.
 
@@ -163,7 +163,7 @@ Each edit field and control shows its word for 1 s, or until the next press (`LE
 
 Forge only wakes a background face once a minute, so a change while you're on another face beeps at the next minute tick (one beep, however many changes were missed). The face shows the right time when you come back.
 
-Settings reset to defaults (level 25, goal 50) when the watch reboots or the face is uploaded (Forge has no storage yet). Type your level back in through LEUEL.
+Settings reset to defaults (level 25, goal 100) when the watch reboots or the face is uploaded (Forge has no storage yet). Type your level back in through LEUEL.
 
 ## Hosted emulator
 

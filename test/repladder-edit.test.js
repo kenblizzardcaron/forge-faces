@@ -5,7 +5,7 @@ const { loadFace } = require('../tools/harness');
 // Fresh face; at(ms) advances the fake clock until elapsed() equals ms.
 function fresh() {
   const w = loadFace('repladder.js');
-  w.ctx.settings = { level: 0, goal: 50, total: 100, length: 600, sets: 5, pace: 3 };
+  w.ctx.settings = { level: 0, goal: 100, total: 100, length: 600, sets: 5, pace: 3 };
   w.ctx.draw();
   w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
   return w;
@@ -147,12 +147,12 @@ test('level and goal fields', () => {
   w.tap('L');
   assert.equal(w.main(), '  GOAL');
   w.advance(1000);
-  assert.equal(w.main(), '    50');
-  assert.equal(w.day(), '22');
+  assert.equal(w.main(), '   100');
+  assert.equal(w.day(), '  ');
   w.tap('A');
-  assert.equal(w.main(), '    51');
-  assert.equal(w.day(), '22');
-  assert.equal(w.ctx.settings.goal, 51);
+  assert.equal(w.main(), '    10');
+  assert.equal(w.day(), ' 6');
+  assert.equal(w.ctx.settings.goal, 10);
   assert.equal(w.ctx.settings.total, 52);
   w.tap('L');
   assert.equal(w.ctx.state, 0);
@@ -171,7 +171,7 @@ test('two-set rung blanks day', () => {
 
 test('level wrap', () => {
   const w = ladder();
-  w.ctx.setLevel(99);
+  w.ctx.setLevel(100);
   w.tap('L');
   w.advance(1000);
   w.tap('A');
@@ -187,7 +187,7 @@ test('level wrap', () => {
 
 test('goal wrap', () => {
   const w = ladder();
-  w.ctx.settings.goal = 99;
+  w.ctx.settings.goal = 100;
   w.tap('L');
   w.tap('L');
   w.advance(1000);
