@@ -11,16 +11,37 @@ const MAX_BYTES = 8158;
 
 const LOCAL = fs.existsSync('local.json') ? JSON.parse(fs.readFileSync('local.json', 'utf8')) : {};
 
-// Swaps each override into the face's `var settings = { ... };` defaults.
+const PROFILE_DEFAULTS = { hold: 0, sets: 5, top: 100, pace: 3, base: 600, level: 1 };
+
+// Fills each local.json profile with the defaults; a missing name or unknown key throws.
+function fillProfiles(profiles) {
+  return profiles.map((p, i) => {
+    if (!p.name) throw new Error(`local.json: repladder profiles[${i}] needs a name`);
+    for (const key of Object.keys(p)) {
+      if (key !== 'name' && !Object.hasOwn(PROFILE_DEFAULTS, key)) throw new Error(`local.json: repladder profiles[${i}] has no setting "${key}"`);
+    }
+    return { name: p.name, ...PROFILE_DEFAULTS, ...p };
+  });
+}
+
+// Swaps each setting into the face's `var settings = { ... };`; `profiles` replaces its list.
 function localize(src, name, overrides) {
-  return src.replace(/var settings = \{[^}]*\}/, (literal) => {
-    for (const [key, value] of Object.entries(overrides)) {
+  const { profiles, ...settings } = overrides;
+  let out = src.replace(/var settings = \{[^}]*\}/, (literal) => {
+    for (const [key, value] of Object.entries(settings)) {
       const re = new RegExp(`\\b${key}: [^,}]+`);
       if (!re.test(literal)) throw new Error(`local.json: ${name} has no setting "${key}"`);
       literal = literal.replace(re, `${key}: ${JSON.stringify(value)}`);
     }
     return literal;
   });
+  if (profiles) {
+    const re = /var profiles = \[[\s\S]*?\];/;
+    if (!re.test(out)) throw new Error(`local.json: ${name} has no profiles list`);
+    const list = JSON.stringify(fillProfiles(profiles));
+    out = out.replace(re, () => `var profiles = ${list};`);
+  }
+  return out;
 }
 
 async function build(name, src = fs.readFileSync(`${name}.js`, 'utf8'), out = `${name}.min.js`) {
@@ -46,4 +67,6 @@ async function main() {
   }
 }
 
-main();
+if (require.main === module) main();
+
+module.exports = { localize };
