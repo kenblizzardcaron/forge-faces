@@ -1,11 +1,10 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { loadFace } = require('../tools/harness');
-const { manual } = require('./repladder-helpers');
+const { loadClassic, manual } = require('./repladder-helpers');
 
 // Fresh face on PUSH at level 0 (top 100, base 600, 5 sets, pace 3); at(ms) advances to elapsed ms.
 function fresh() {
-  const w = loadFace('repladder.js');
+  const w = loadClassic();
   manual(w, { top: 100, base: 600, sets: 5, pace: 3 });
   w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
   return w;
@@ -13,7 +12,7 @@ function fresh() {
 
 // Fresh face on PUSH's default level 19, idle, past the intro.
 function ladder() {
-  const w = loadFace('repladder.js');
+  const w = loadClassic();
   w.advance(1000);
   w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
   return w;

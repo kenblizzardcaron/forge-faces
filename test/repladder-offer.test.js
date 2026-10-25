@@ -1,10 +1,10 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { loadFace } = require('../tools/harness');
+const { loadClassic } = require('./repladder-helpers');
 
 // Fresh face past the intro (default level 19); at(ms) advances until elapsed() equals ms.
 function fresh() {
-  const w = loadFace('repladder.js');
+  const w = loadClassic();
   w.advance(1000);
   w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
   return w;

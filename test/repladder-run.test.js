@@ -1,11 +1,10 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { loadFace } = require('../tools/harness');
-const { manual } = require('./repladder-helpers');
+const { loadClassic, manual } = require('./repladder-helpers');
 
 // Fresh face past its 1 s intro; at(ms) advances the fake clock until elapsed() equals ms.
 function fresh() {
-  const w = loadFace('repladder.js');
+  const w = loadClassic();
   w.advance(1000);
   manual(w, { top: 100, base: 600, sets: 5, pace: 3 });
   w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
@@ -13,12 +12,12 @@ function fresh() {
 }
 
 test('intro', () => {
-  const w = loadFace('repladder.js');
+  const w = loadClassic();
   assert.equal(w.main(), '  PUSH');
   assert.equal(w.colon, false);
   w.advance(1000);
   assert.equal(w.main(), '100013');
-  const p = loadFace('repladder.js');
+  const p = loadClassic();
   p.tap('A');
   assert.equal(p.main(), 'rEP 51');
 });
@@ -41,7 +40,7 @@ test('idle screen', () => {
 });
 
 test('idle on the ladder', () => {
-  const w = loadFace('repladder.js');
+  const w = loadClassic();
   w.advance(1000);
   assert.equal(w.day(), 'S1');
   assert.equal(w.main(), '100013');
@@ -83,7 +82,7 @@ test('lead-in', () => {
 });
 
 test('lead-in on a level', () => {
-  const w = loadFace('repladder.js');
+  const w = loadClassic();
   w.advance(1000);
   w.ctx.setLevel(45);
   w.tap('A');
@@ -107,7 +106,7 @@ test('lead-in on a level', () => {
 });
 
 test('lead-in GO with one set of 100', () => {
-  const w = loadFace('repladder.js');
+  const w = loadClassic();
   w.advance(1000);
   w.ctx.setLevel(118);
   w.tap('A');

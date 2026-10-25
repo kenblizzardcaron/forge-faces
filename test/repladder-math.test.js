@@ -1,8 +1,8 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { loadFace } = require('../tools/harness');
+const { loadClassic } = require('./repladder-helpers');
 
-const w = loadFace('repladder.js');
+const w = loadClassic();
 // vm objects have another realm's prototypes; deepStrictEqual needs plain copies
 const plain = (x) => JSON.parse(JSON.stringify(x));
 const plan = (...a) => plain(w.ctx.plan(...a));

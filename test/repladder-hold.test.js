@@ -1,11 +1,10 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { loadFace } = require('../tools/harness');
-const { manual } = require('./repladder-helpers');
+const { loadClassic, manual } = require('./repladder-helpers');
 
 // PLAnK level 1 past its intro: 5 holds of 10 s in 10:00; at(ms) advances to elapsed() == ms.
 function hold() {
-  const w = loadFace('repladder.js');
+  const w = loadClassic();
   w.advance(1000);
   w.ctx.settings.profile = 2;
   w.ctx.load();
@@ -71,7 +70,7 @@ test('manual hold', () => {
 });
 
 test('intro shows the profile name', () => {
-  const w = loadFace('repladder.js');
+  const w = loadClassic();
   assert.equal(w.main(), '  PUSH');
   w.advance(1000);
   w.setActive(false);
