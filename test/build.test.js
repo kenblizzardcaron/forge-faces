@@ -39,6 +39,11 @@ test('profiles must be a list', () => {
   assert.throws(() => localize(src, 'repladder', { profiles: [] }), /repladder profiles must be a non-empty list/);
 });
 
+test('faces without profiles skip the check', () => {
+  const multitimer = fs.readFileSync(path.join(__dirname, '..', 'multitimer.js'), 'utf8');
+  assert.doesNotThrow(() => localize(multitimer, 'multitimer', {}));
+});
+
 test('old level key fails', () => {
   assert.throws(() => localize(src, 'repladder', { level: 45 }), /has no setting "level"/);
 });

@@ -40,19 +40,23 @@ function localize(src, name, overrides) {
     }
     return literal;
   });
-  let count;
+  const hasList = re.test(src);
+  let count = 0;
   if (profiles) {
-    if (!re.test(out)) throw new Error(`local.json: ${name} has no profiles list`);
+    if (!hasList) throw new Error(`local.json: ${name} has no profiles list`);
     const list = JSON.stringify(fillProfiles(name, profiles));
     out = out.replace(re, () => `var profiles = ${list};`);
     count = profiles.length;
-  } else {
-    count = (src.match(re)?.[0].match(/\bname:/g) || []).length;
+  } else if (hasList) {
+    count = (src.match(re)[0].match(/\bname:/g) || []).length;
   }
-  const picked = out.match(/var settings = \{[^}]*\}/)[0].match(/\bprofile: ([^,}]+)/);
-  const index = picked ? JSON.parse(picked[1]) : 0;
-  if (!Number.isInteger(index) || index < 0 || index >= count) {
-    throw new Error(`local.json: ${name} profile ${index} is out of range (0..${count - 1})`);
+  if (hasList) {
+    const settingsLiteral = out.match(/var settings = \{[^}]*\}/);
+    const picked = settingsLiteral && settingsLiteral[0].match(/\bprofile: ([^,}]+)/);
+    const index = picked ? JSON.parse(picked[1]) : 0;
+    if (!Number.isInteger(index) || index < 0 || index >= count) {
+      throw new Error(`local.json: ${name} profile ${index} is out of range (0..${count - 1})`);
+    }
   }
   return out;
 }
