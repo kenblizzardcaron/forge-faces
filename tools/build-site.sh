@@ -16,3 +16,4 @@ mkdir -p "$out/faces"
 cp "$root"/*.js "$out/faces/"
 rm -f "$out"/faces/*-local.js "$out"/faces/*-local.min.js
 rm -f "$out/faces/build.js"
+rm -f "$out/faces/face-build.js"
