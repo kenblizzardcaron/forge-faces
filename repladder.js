@@ -10,10 +10,10 @@ var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3, OFFER = 4;
 var state = IDLE, startAt = 0, paused = false, pausedAt = 0, current = null, lastPhase = -1, message = '', messageUntil = 0;
 var displayTimer = -1, longFired = 0, hush = 0;
 // Edit: L cycles fields; A steps the current one, and holding A repeats every 100 ms on its own slot.
-var FIELDS = ['level', 'top', 'base', 'sets', 'pace'];
-var WORDS = ['LEUEL', 'Count', 'LEn', 'SEtS', 'PACE'];
-// Level's max comes from the profile, so its limit is unused.
-var LIMITS = [[0, 0, 1], [1, 999, 1], [15, 5985, 15], [1, 9, 1], [1, 20, 1]];
+// PROFILE flashes no word; its name is the display. Top's range comes from topRange().
+var FIELDS = ['profile', 'level', 'top', 'sets', 'pace', 'base'];
+var WORDS = ['', 'LEUEL', 'Count', 'SEtS', 'PACE', 'LEn'];
+var LIMITS = { sets: [1, 9, 1], pace: [1, 20, 1], base: [15, 5985, 15] };
 var field = 0, repeatTimer = -1;
 // Finish ring: stock triple, 125 ms steps, beeping on steps 0-2 of each 8; own timer slot.
 var RING_STEP_MS = 125, ringTimer = -1, ringStepNo = 0, ringSteps = 0, cue = 6;
@@ -89,16 +89,22 @@ function draw() {
     main = preview(session);
     colon = true;
   } else if (state == EDIT) {
-    var q = plan(session.total, session.length, session.sets, session.pace, session.hold), v = cur()[FIELDS[field]];
-    if (field == 0) {
-      // The first day digit only shows 1-3, so a level's set 1 reps show here only when under 40.
-      var r = v ? rungAt(cur(), v) : null, lr = r ? plan(r.total, r.length, r.sets, r.pace, r.hold) : null;
-      day = lr && lr.reps[0] < 40 ? String(lr.reps[0]) : '  ';
-      main = v ? String(v) : 'oFF';
+    var q = plan(session.total, session.length, session.sets, session.pace, session.hold), key = FIELDS[field], v = cur()[key];
+    if (key == 'profile') {
+      // The day shows the profile's slot, 1-based.
+      day = ' ' + (settings.profile + 1);
+      main = ('      ' + cur().name).slice(-6);
+    } else if (key == 'level') {
+      // A level previews its sets and total reps; level 0 is off.
+      var r = v ? rungAt(cur(), v) : null;
+      day = r ? ' ' + r.sets : '  ';
+      main = r ? pad3(v) + pad3(r.total) : '   oFF';
     } else {
+      // Seconds show as m:ss on holds' top and on LEn; reps as numbers.
+      var timed = key == 'base' || (key == 'top' && cur().hold);
       day = q ? fmtReps(q.reps[0]) : 'Er';
-      main = field == 2 ? fmtTime(cur().base) + '  ' : ('      ' + v).slice(-6);
-      colon = field == 2;
+      main = timed ? fmtTime(v) + '  ' : ('      ' + v).slice(-6);
+      colon = timed;
     }
   } else if (state == OFFER && ringTimer == -1) {
     day = '  ';
@@ -181,19 +187,31 @@ function clock_minute() { catchUp(); draw(); }
 
 // Sets the active profile's level and derives the session from it.
 function setLevel(n) { cur().level = n; load(); }
-// Steps the current field on the active profile, wrapping to the minimum past the maximum, then reloads the session.
+// Top's [min, max, step]: holds step 5 s, reps 1. A level starts at its first rung; level 0 at 1 (5 s for holds).
+function topRange(p) {
+  var hold = p.hold;
+  var min = p.level ? (hold ? 10 * p.sets : p.sets * (p.sets + 1) / 2) : (hold ? 5 : 1);
+  return [min, hold ? 5985 : Math.min(999, Math.floor(5985 / p.pace)), hold ? 5 : 1];
+}
+// Steps the current field on the active profile, wrapping to its minimum; then clamps top and reloads.
 function bump() {
-  var p = cur(), key = FIELDS[field], lim = LIMITS[field];
-  var v = p[key] + lim[2];
-  if (v > (field == 0 ? maxLevel(p) : lim[1])) v = lim[0];
-  p[key] = v;
+  var p = cur(), key = FIELDS[field];
+  if (key == 'profile') settings.profile = (settings.profile + 1) % profiles.length;
+  else if (key == 'level') p.level = p.level < maxLevel(p) ? p.level + 1 : 0;
+  else {
+    var lim = key == 'top' ? topRange(p) : LIMITS[key], v = p[key] + lim[2];
+    p[key] = v > lim[1] ? lim[0] : v;
+    var t = topRange(p);
+    p.top = Math.min(t[1], Math.max(t[0], p.top));
+    // A bump that makes the ladder too long to fit in 999 levels wraps back to its minimum.
+    if (maxLevel(p) > 999) p[key] = lim[0];
+  }
   load();
 }
-// L in EDIT: on a level, Level -> LEn -> idle; at level 0, Level -> Count -> LEn -> SEtS -> PACE -> idle.
+// L in EDIT steps PROFILE -> LEVEL -> Count -> SEtS -> PACE -> LEn -> idle; hold profiles skip PACE.
 function nextField() {
   var f = field + 1;
-  if (field == 0 && cur().level) f = 2;
-  if (field == 2 && cur().level) f = FIELDS.length;
+  if (FIELDS[f] == 'pace' && cur().hold) f++;
   if (f == FIELDS.length) { field = 0; state = IDLE; }
   else { field = f; flash(WORDS[f]); }
 }
@@ -226,7 +244,7 @@ function button(b, e) {
   if (!longPress) {
     if (state == DONE) state = IDLE;
     else if (state == IDLE && b == B_A) start();
-    else if (state == IDLE && b == B_L) { state = EDIT; field = 0; flash(WORDS[0]); }
+    else if (state == IDLE && b == B_L) { state = EDIT; field = 0; }
     else if (state == EDIT && b == B_A) bump();
     else if (state == EDIT && b == B_L) nextField();
     else if (state == RUNNING && b == B_A) { if (paused) resume(); else pause(); }

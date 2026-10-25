@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { loadFace } = require('../tools/harness');
 const { manual } = require('./repladder-helpers');
 
-// Fresh face; at(ms) advances the fake clock until elapsed() equals ms.
+// Fresh face on PUSH at level 0 (top 100, base 600, 5 sets, pace 3); at(ms) advances to elapsed ms.
 function fresh() {
   const w = loadFace('repladder.js');
   manual(w, { top: 100, base: 600, sets: 5, pace: 3 });
@@ -11,69 +11,160 @@ function fresh() {
   return w;
 }
 
-test('walk the fields', () => {
-  const w = fresh();
+// Fresh face on PUSH's default level 19, idle, past the intro.
+function ladder() {
+  const w = loadFace('repladder.js');
+  w.advance(1000);
+  w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
+  return w;
+}
+
+test('walk the fields on a level', () => {
+  const w = ladder();
+  w.tap('L');
+  assert.equal(w.main(), '  PUSH');
+  assert.equal(w.day(), ' 1');
   w.tap('L');
   assert.equal(w.main(), ' LEUEL');
+  w.advance(1000);
+  assert.equal(w.main(), ' 19 51');
+  assert.equal(w.day(), ' 5');
   w.tap('L');
   assert.equal(w.main(), ' Count');
-  assert.equal(w.day(), '22');
-  w.advance(1000);
-  assert.equal(w.main(), '   100');
-  w.tap('A');
-  assert.equal(w.main(), '   101');
-  assert.equal(w.day(), '23');
-  w.tap('L');
-  assert.equal(w.main(), '   LEn');
-  w.advance(1000);
-  assert.equal(w.main(), '1000  ');
-  assert.equal(w.colon, true);
-  w.tap('A');
-  assert.equal(w.main(), '1015  ');
   w.tap('L');
   assert.equal(w.main(), '  SEtS');
-  w.advance(1000);
-  assert.equal(w.main(), '     5');
   w.tap('L');
   assert.equal(w.main(), '  PACE');
-  w.advance(1000);
-  assert.equal(w.main(), '     3');
+  w.tap('L');
+  assert.equal(w.main(), '   LEn');
   w.tap('L');
   assert.equal(w.ctx.state, 0);
-  assert.equal(w.main(), '101523');
 });
 
-test('wrap', () => {
+test('walk the fields at level 0', () => {
   const w = fresh();
   w.tap('L');
+  assert.equal(w.main(), '  PUSH');
+  for (const word of [' LEUEL', ' Count', '  SEtS', '  PACE', '   LEn']) {
+    w.tap('L');
+    assert.equal(w.main(), word);
+  }
   w.tap('L');
-  w.advance(1000);
-  w.ctx.cur().top = 999;
+  assert.equal(w.ctx.state, 0);
+  assert.equal(w.main(), '100022');
+});
+
+test('hold skips PACE', () => {
+  const w = ladder();
+  w.tap('L');
   w.tap('A');
-  assert.equal(w.main(), '     1');
+  w.tap('A');
+  assert.equal(w.main(), ' PLAnK');
+  for (const word of [' LEUEL', ' Count', '  SEtS', '   LEn']) {
+    w.tap('L');
+    assert.equal(w.main(), word);
+  }
+});
 
-  const s = fresh();
-  s.tap('L');
-  s.tap('L');
-  s.tap('L');
-  s.tap('L');
-  s.advance(1000);
-  s.ctx.cur().sets = 9;
-  s.tap('A');
-  assert.equal(s.main(), '     1');
+test('switching keeps each level', () => {
+  const w = ladder();
+  w.tap('L');
+  w.tap('A');
+  assert.equal(w.ctx.cur().name, 'PULL');
+  w.tap('L');
+  w.tap('A');
+  assert.equal(w.ctx.cur().level, 2);
+  for (let i = 0; i < 5; i++) w.tap('L');
+  assert.equal(w.ctx.state, 0);
+  w.tap('L');
+  w.tap('A');
+  w.tap('A');
+  assert.equal(w.ctx.cur().name, 'PUSH');
+  assert.equal(w.ctx.cur().level, 19);
+  assert.equal(w.ctx.session.total, 51);
+  w.tap('A');
+  assert.equal(w.ctx.cur().name, 'PULL');
+  assert.equal(w.ctx.cur().level, 2);
+});
 
-  const l = fresh();
-  l.tap('L');
-  l.tap('L');
-  l.tap('L');
-  l.advance(1000);
-  l.ctx.cur().base = 5985;
-  l.tap('A');
-  assert.equal(l.main(), ' 015  ');
+test('top clamps to the ladder start', () => {
+  const w = ladder();
+  w.ctx.cur().top = 999;
+  w.tap('L');
+  w.tap('L');
+  w.tap('L');
+  w.tap('A');
+  assert.equal(w.ctx.cur().top, 15);
+  w.tap('L');
+  w.tap('A');
+  assert.equal(w.ctx.cur().sets, 6);
+  assert.equal(w.ctx.cur().top, 21);
+});
+
+test('editing clamps the level', () => {
+  const w = ladder();
+  w.ctx.setLevel(118);
+  w.ctx.cur().sets = 9;
+  w.tap('L');
+  w.tap('L');
+  w.tap('L');
+  w.tap('L');
+  w.tap('A');
+  assert.equal(w.ctx.cur().sets, 1);
+  assert.equal(w.ctx.cur().level, w.ctx.maxLevel(w.ctx.cur()));
+  const s = w.ctx.session;
+  assert.notEqual(w.ctx.plan(s.total, s.length, s.sets, s.pace, s.hold), null);
+});
+
+test('level cap 999', () => {
+  const w = ladder();
+  w.tap('L');
+  w.tap('A');
+  w.tap('A');
+  const p = w.ctx.cur();
+  assert.equal(p.name, 'PLAnK');
+  p.sets = 1;
+  p.top = 995;
+  w.tap('L');
+  w.tap('L');
+  w.tap('A');
+  assert.equal(p.top, 1000);
+  assert.equal(w.ctx.maxLevel(p), 992);
+  w.tap('A');
+  assert.equal(p.top, 1005);
+  assert.equal(w.ctx.maxLevel(p), 997);
+  w.tap('A');
+  assert.equal(p.top, 10);
+});
+
+test('top fits 99:45', () => {
+  const w = fresh();
+  manual(w, { top: 299, base: 600, sets: 5, pace: 20 });
+  w.tap('L');
+  w.tap('L');
+  w.tap('L');
+  w.tap('A');
+  assert.equal(w.ctx.cur().top, 1);
+});
+
+test('level wrap', () => {
+  const w = ladder();
+  w.ctx.setLevel(118);
+  w.tap('L');
+  w.tap('L');
+  w.tap('A');
+  assert.equal(w.main(), '   oFF');
+  assert.equal(w.day(), '  ');
+  assert.deepEqual([w.ctx.session.total, w.ctx.session.length, w.ctx.session.sets], [100, 600, 5]);
+  w.tap('A');
+  assert.equal(w.ctx.cur().level, 1);
+  assert.equal(w.main(), '  1 15');
+  assert.equal(w.day(), ' 5');
 });
 
 test('hold repeats', () => {
   const w = fresh();
+  w.tap('L');
   w.tap('L');
   w.tap('L');
   w.advance(1000);
@@ -86,6 +177,7 @@ test('hold repeats', () => {
 
 test('Er while editing', () => {
   const w = fresh();
+  w.tap('L');
   w.tap('L');
   w.tap('L');
   w.advance(1000);
@@ -114,6 +206,7 @@ test('leaving edit stops a held repeat', () => {
   w.ctx.a_long();
   w.advance(300);
   w.tap('L');
+  w.tap('L');
   assert.equal(w.ctx.state, 0);
   assert.equal(w.main(), '100022');
   const before = JSON.stringify(w.ctx.cur());
@@ -122,76 +215,37 @@ test('leaving edit stops a held repeat', () => {
   assert.equal(w.ctx.state, 0);
 });
 
-// Ladder face at the default level 19, idle.
-function ladder() {
-  const w = loadFace('repladder.js');
-  w.advance(1000);
-  w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
-  return w;
-}
-
 test('level field', () => {
   const w = ladder();
   w.tap('L');
+  w.tap('L');
   assert.equal(w.main(), ' LEUEL');
-  assert.equal(w.day(), '13');
   w.advance(1000);
-  assert.equal(w.main(), '    19');
-  assert.equal(w.day(), '13');
+  assert.equal(w.main(), ' 19 51');
+  assert.equal(w.day(), ' 5');
   w.tap('A');
-  assert.equal(w.day(), '13');
-  assert.equal(w.main(), '    20');
+  assert.equal(w.main(), ' 20 53');
   assert.equal(w.ctx.session.total, 53);
-  w.tap('L');
-  assert.equal(w.main(), '   LEn');
-  w.tap('L');
+  for (let i = 0; i < 5; i++) w.tap('L');
   assert.equal(w.ctx.state, 0);
   assert.equal(w.day(), 'S1');
 });
 
-test('two-set rung blanks day', () => {
+test('level preview shows sets and total', () => {
   const w = ladder();
   w.ctx.setLevel(98);
   w.tap('L');
+  w.tap('L');
   w.advance(1000);
-  assert.equal(w.main(), '    98');
+  const r = w.ctx.rungAt(w.ctx.cur(), 98);
+  assert.equal(w.main(), ' 98' + String(r.total).padStart(3));
+  assert.equal(w.day(), ' ' + r.sets);
   assert.equal(w.colon, false);
-  assert.equal(w.day(), '  ');
-});
-
-test('level wrap', () => {
-  const w = ladder();
-  w.ctx.setLevel(118);
-  w.tap('L');
-  w.advance(1000);
-  w.tap('A');
-  assert.equal(w.ctx.cur().level, 0);
-  assert.equal(w.main(), '   oFF');
-  assert.equal(w.day(), '  ');
-  assert.deepEqual([w.ctx.session.total, w.ctx.session.length, w.ctx.session.sets], [100, 600, 5]);
-  w.tap('A');
-  assert.equal(w.ctx.cur().level, 1);
-  assert.equal(w.main(), '     1');
-  assert.equal(w.day(), ' 5');
-});
-
-test('level 0 goes to the manual fields; a level skips them', () => {
-  const w = ladder();
-  w.tap('L');
-  w.tap('L');
-  assert.equal(w.main(), '   LEn');
-  w.tap('L');
-  assert.equal(w.ctx.state, 0);
-  w.ctx.setLevel(0);
-  w.tap('L');
-  w.tap('L');
-  assert.equal(w.main(), ' Count');
 });
 
 test('session time on a level', () => {
   const w = ladder();
-  w.tap('L');
-  w.tap('L');
+  for (let i = 0; i < 6; i++) w.tap('L');
   assert.equal(w.main(), '   LEn');
   w.advance(1000);
   assert.equal(w.main(), '1000  ');
