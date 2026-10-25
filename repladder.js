@@ -2,7 +2,7 @@
 // Upload repladder.min.js, the built copy of this file.
 const subscribe = E_BUTTONS + E_A_LONG;
 var settings = { profile: 0 };
-var profiles = [{ name: 'PUSH', hold: 0, sets: 5, top: 100, pace: 3, base: 600, level: 19 }, { name: 'PULL', hold: 0, sets: 5, top: 50, pace: 3, base: 360, level: 1 }, { name: 'PLAnK', hold: 1, sets: 5, top: 300, pace: 3, base: 600, level: 1 }];
+var profiles = [{ name: 'SLOt 1', hold: 0, sets: 5, top: 50, pace: 3, base: 600, level: 1 }, { name: 'SLOt 2', hold: 0, sets: 5, top: 50, pace: 3, base: 600, level: 1 }, { name: 'SLOt 3', hold: 0, sets: 5, top: 50, pace: 3, base: 600, level: 1 }, { name: 'SLOt 4', hold: 0, sets: 5, top: 50, pace: 3, base: 600, level: 1 }, { name: 'SLOt 5', hold: 0, sets: 5, top: 50, pace: 3, base: 600, level: 1 }];
 // The session the face runs and draws; load() derives it from the active profile.
 var session = null;
 
@@ -10,9 +10,9 @@ var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3, OFFER = 4;
 var state = IDLE, startAt = 0, paused = false, pausedAt = 0, current = null, lastPhase = -1, message = '', messageUntil = 0;
 var displayTimer = -1, longFired = 0, hush = 0;
 // Edit: L cycles fields; A steps the current one, and holding A repeats every 100 ms on its own slot.
-// PROFILE flashes no word; its name is the display. Top's range comes from topRange().
-var FIELDS = ['profile', 'level', 'top', 'sets', 'pace', 'base'];
-var WORDS = ['', 'LEUEL', 'Count', 'SEtS', 'PACE', 'LEn'];
+// PROFILE and TYPE flash no word; TYPE shows reps or a hold. Top's range comes from topRange().
+var FIELDS = ['profile', 'hold', 'top', 'level', 'sets', 'pace', 'base'];
+var WORDS = { level: 'LEUEL', sets: 'SEtS', pace: 'PACE', base: 'LEn' };
 var LIMITS = { sets: [1, 9, 1], pace: [1, 20, 1], base: [15, 5985, 15] };
 var field = 0, repeatTimer = -1;
 // Finish ring: stock triple, 125 ms steps, beeping on steps 0-2 of each 8; own timer slot.
@@ -94,6 +94,9 @@ function draw() {
       // The day shows the profile's slot, 1-based.
       day = ' ' + (settings.profile + 1);
       main = ('      ' + cur().name).slice(-6);
+    } else if (key == 'hold') {
+      day = '  ';
+      main = cur().hold ? '  HOLd' : '  rEPS';
     } else if (key == 'level') {
       // A level previews its sets and total reps; level 0 is off.
       var r = v ? rungAt(cur(), v) : null;
@@ -103,6 +106,8 @@ function draw() {
       // Seconds show as m:ss on holds' top and on LEn; reps as numbers.
       var timed = key == 'base' || (key == 'top' && cur().hold);
       day = q ? fmtReps(q.reps[0]) : 'Er';
+      // On a level, top's day is ' 1'.
+      if (key == 'top' && cur().level) day = ' 1';
       main = timed ? fmtTime(v) + '  ' : ('      ' + v).slice(-6);
       colon = timed;
     }
@@ -194,11 +199,15 @@ function topRange(p) {
   return [min, hold ? 5985 : Math.min(999, Math.floor(5985 / p.pace)), hold ? 5 : 1];
 }
 // Steps the current field on the active profile, wrapping to its minimum; then clamps top and reloads.
+// TYPE toggles reps and holds; a hold rounds top up to 5 s.
 function bump() {
   var p = cur(), key = FIELDS[field], lim = null;
   if (key == 'profile') settings.profile = (settings.profile + 1) % profiles.length;
   else {
-    if (key == 'level') p.level = p.level < maxLevel(p) ? p.level + 1 : 0;
+    if (key == 'hold') {
+      p.hold = 1 - p.hold;
+      if (p.hold) p.top = Math.ceil(p.top / 5) * 5;
+    } else if (key == 'level') p.level = p.level < maxLevel(p) ? p.level + 1 : 0;
     else {
       lim = key == 'top' ? topRange(p) : LIMITS[key];
       var v = p[key] + lim[2];
@@ -211,12 +220,16 @@ function bump() {
   }
   load();
 }
-// L in EDIT steps PROFILE -> LEVEL -> Count -> SEtS -> PACE -> LEn -> idle; hold profiles skip PACE.
+// The word flashed on entering a field: LASt on a level, Count at level 0; none for PROFILE and TYPE.
+function wordFor(key) { return key == 'top' ? (cur().level ? 'LASt' : 'Count') : WORDS[key] || ''; }
+// L in EDIT steps PROFILE -> TYPE -> LASt -> LEUEL -> SEtS -> PACE -> LEn -> idle; hold profiles skip PACE.
 function nextField() {
   var f = field + 1;
   if (FIELDS[f] == 'pace' && cur().hold) f++;
-  if (f == FIELDS.length) { field = 0; state = IDLE; }
-  else { field = f; flash(WORDS[f]); }
+  if (f == FIELDS.length) { field = 0; state = IDLE; return; }
+  field = f;
+  var word = wordFor(FIELDS[f]);
+  if (word) flash(word); else draw();
 }
 // Stops itself if EDIT was left while A was still held.
 function repeatStep() { if (state != EDIT) { stopRepeat(); return; } bump(); draw(); }

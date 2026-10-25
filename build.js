@@ -11,7 +11,7 @@ const MAX_BYTES = 8158;
 
 const LOCAL = fs.existsSync('local.json') ? JSON.parse(fs.readFileSync('local.json', 'utf8')) : {};
 
-const PROFILE_DEFAULTS = { hold: 0, sets: 5, top: 100, pace: 3, base: 600, level: 1 };
+const PROFILE_DEFAULTS = { hold: 0, sets: 5, top: 50, pace: 3, base: 600, level: 1 };
 
 // Fills each local.json profile with the defaults; a missing name or unknown key throws.
 function fillProfiles(name, profiles) {

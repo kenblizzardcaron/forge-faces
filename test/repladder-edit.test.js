@@ -1,5 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const { loadFace } = require('../tools/harness');
 const { loadClassic, manual } = require('./repladder-helpers');
 
 // Fresh face on PUSH at level 0 (top 100, base 600, 5 sets, pace 3); at(ms) advances to elapsed ms.
@@ -18,18 +19,28 @@ function ladder() {
   return w;
 }
 
+test('ships five generic slots', () => {
+  const { ctx } = loadFace('repladder.js');
+  const plain = [...ctx.profiles].map((p) => ({ ...p }));
+  assert.equal(plain.length, 5);
+  assert.deepEqual(plain.map((p) => p.name), ['SLOt 1', 'SLOt 2', 'SLOt 3', 'SLOt 4', 'SLOt 5']);
+  for (const p of plain) assert.deepEqual(p, { name: p.name, hold: 0, sets: 5, top: 50, pace: 3, base: 600, level: 1 });
+});
+
 test('walk the fields on a level', () => {
   const w = ladder();
   w.tap('L');
   assert.equal(w.main(), '  PUSH');
   assert.equal(w.day(), ' 1');
   w.tap('L');
-  assert.equal(w.main(), ' LEUEL');
-  w.advance(1000);
-  assert.equal(w.main(), ' 19 51');
-  assert.equal(w.day(), ' 5');
+  assert.equal(w.main(), '  rEPS');
   w.tap('L');
-  assert.equal(w.main(), ' Count');
+  assert.equal(w.main(), '  LASt');
+  w.advance(1000);
+  assert.equal(w.main(), '   100');
+  assert.equal(w.day(), ' 1');
+  w.tap('L');
+  assert.equal(w.main(), ' LEUEL');
   w.tap('L');
   assert.equal(w.main(), '  SEtS');
   w.tap('L');
@@ -44,7 +55,9 @@ test('walk the fields at level 0', () => {
   const w = fresh();
   w.tap('L');
   assert.equal(w.main(), '  PUSH');
-  for (const word of [' LEUEL', ' Count', '  SEtS', '  PACE', '   LEn']) {
+  w.tap('L');
+  assert.equal(w.main(), '  rEPS');
+  for (const word of [' Count', ' LEUEL', '  SEtS', '  PACE', '   LEn']) {
     w.tap('L');
     assert.equal(w.main(), word);
   }
@@ -53,13 +66,62 @@ test('walk the fields at level 0', () => {
   assert.equal(w.main(), '100022');
 });
 
+test('Count at level 0', () => {
+  const w = loadClassic();
+  manual(w, { top: 100, base: 600, sets: 5, pace: 3 });
+  w.tap('L');
+  w.tap('L');
+  w.tap('L');
+  assert.equal(w.main(), ' Count');
+});
+
+test('TYPE toggles to a hold', () => {
+  const w = ladder();
+  w.tap('L');
+  w.tap('L');
+  w.tap('A');
+  assert.equal(w.main(), '  HOLd');
+  assert.equal(w.ctx.cur().hold, 1);
+  assert.equal(w.ctx.cur().top, 100);
+  assert.equal(w.ctx.session.hold, 1);
+  const s = w.ctx.session;
+  assert.notEqual(w.ctx.plan(s.total, s.length, s.sets, s.pace, s.hold), null);
+  w.tap('A');
+  assert.equal(w.main(), '  rEPS');
+  assert.equal(w.ctx.cur().hold, 0);
+});
+
+test('TYPE rounds top to 5 s', () => {
+  const w = ladder();
+  w.ctx.settings.profile = 1;
+  w.ctx.cur().top = 51;
+  w.tap('L');
+  w.tap('L');
+  w.tap('A');
+  assert.equal(w.ctx.cur().top, 55);
+});
+
+test('LASt shows a hold as time', () => {
+  const w = ladder();
+  w.ctx.settings.profile = 2;
+  w.tap('L');
+  w.tap('L');
+  w.tap('L');
+  w.advance(1000);
+  assert.equal(w.main(), ' 500  ');
+  assert.equal(w.colon, true);
+  assert.equal(w.day(), ' 1');
+});
+
 test('hold skips PACE', () => {
   const w = ladder();
   w.tap('L');
   w.tap('A');
   w.tap('A');
   assert.equal(w.main(), ' PLAnK');
-  for (const word of [' LEUEL', ' Count', '  SEtS', '   LEn']) {
+  w.tap('L');
+  assert.equal(w.main(), '  HOLd');
+  for (const word of ['  LASt', ' LEUEL', '  SEtS', '   LEn']) {
     w.tap('L');
     assert.equal(w.main(), word);
   }
@@ -71,9 +133,11 @@ test('switching keeps each level', () => {
   w.tap('A');
   assert.equal(w.ctx.cur().name, 'PULL');
   w.tap('L');
+  w.tap('L');
+  w.tap('L');
   w.tap('A');
   assert.equal(w.ctx.cur().level, 2);
-  for (let i = 0; i < 5; i++) w.tap('L');
+  for (let i = 0; i < 4; i++) w.tap('L');
   assert.equal(w.ctx.state, 0);
   w.tap('L');
   w.tap('A');
@@ -95,6 +159,7 @@ test('top clamps to the ladder start', () => {
   w.tap('A');
   assert.equal(w.ctx.cur().top, 15);
   w.tap('L');
+  w.tap('L');
   w.tap('A');
   assert.equal(w.ctx.cur().sets, 6);
   assert.equal(w.ctx.cur().top, 21);
@@ -103,6 +168,8 @@ test('top clamps to the ladder start', () => {
 test('level from manual clamps top', () => {
   const w = fresh();
   manual(w, { top: 5, base: 600, sets: 5, pace: 3 });
+  w.tap('L');
+  w.tap('L');
   w.tap('L');
   w.tap('L');
   w.tap('A');
@@ -128,6 +195,7 @@ test('editing clamps the level', () => {
   const w = ladder();
   w.ctx.setLevel(118);
   w.ctx.cur().sets = 9;
+  w.tap('L');
   w.tap('L');
   w.tap('L');
   w.tap('L');
@@ -175,6 +243,8 @@ test('level wrap', () => {
   w.ctx.setLevel(118);
   w.tap('L');
   w.tap('L');
+  w.tap('L');
+  w.tap('L');
   w.tap('A');
   assert.equal(w.main(), '   oFF');
   assert.equal(w.day(), '  ');
@@ -217,11 +287,7 @@ test('no edit while running', () => {
 
 test('leaving edit stops a held repeat', () => {
   const w = fresh();
-  w.tap('L');
-  w.tap('L');
-  w.tap('L');
-  w.tap('L');
-  w.tap('L');
+  for (let i = 0; i < 6; i++) w.tap('L');
   assert.equal(w.main(), '  PACE');
   w.advance(1000);
   // Start a hold on A without releasing it, as a long press would.
@@ -242,6 +308,8 @@ test('level field', () => {
   const w = ladder();
   w.tap('L');
   w.tap('L');
+  w.tap('L');
+  w.tap('L');
   assert.equal(w.main(), ' LEUEL');
   w.advance(1000);
   assert.equal(w.main(), ' 19 51');
@@ -249,7 +317,7 @@ test('level field', () => {
   w.tap('A');
   assert.equal(w.main(), ' 20 53');
   assert.equal(w.ctx.session.total, 53);
-  for (let i = 0; i < 5; i++) w.tap('L');
+  for (let i = 0; i < 4; i++) w.tap('L');
   assert.equal(w.ctx.state, 0);
   assert.equal(w.day(), 'S1');
 });
@@ -257,6 +325,8 @@ test('level field', () => {
 test('level preview shows sets and total', () => {
   const w = ladder();
   w.ctx.setLevel(98);
+  w.tap('L');
+  w.tap('L');
   w.tap('L');
   w.tap('L');
   w.advance(1000);
@@ -268,7 +338,7 @@ test('level preview shows sets and total', () => {
 
 test('session time on a level', () => {
   const w = ladder();
-  for (let i = 0; i < 6; i++) w.tap('L');
+  for (let i = 0; i < 7; i++) w.tap('L');
   assert.equal(w.main(), '   LEn');
   w.advance(1000);
   assert.equal(w.main(), '1000  ');

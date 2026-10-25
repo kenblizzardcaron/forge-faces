@@ -29,7 +29,7 @@ test('nameless profile fails', () => {
 });
 
 test('profile out of range fails', () => {
-  assert.throws(() => localize(src, 'repladder', { profile: 5 }), /repladder profile 5 is out of range \(0\.\.2\)/);
+  assert.throws(() => localize(src, 'repladder', { profile: 5 }), /repladder profile 5 is out of range \(0\.\.4\)/);
   assert.throws(() => localize(src, 'repladder', { profile: 2, profiles: [{ name: 'A' }] }),
     /repladder profile 2 is out of range \(0\.\.0\)/);
 });
