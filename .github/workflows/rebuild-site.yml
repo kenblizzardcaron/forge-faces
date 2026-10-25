@@ -1,0 +1,16 @@
+name: Rebuild site
+
+on:
+  push:
+    branches: [main]
+    paths: [repladder.js, face-build.js]
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger kenblizzardcaron.com rebuild
+        env:
+          HOOK: ${{ secrets.NETLIFY_BUILD_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then echo "::notice::NETLIFY_BUILD_HOOK not set; skipping"; else curl -fsS -X POST -d '{}' "$HOOK"; fi
