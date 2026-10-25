@@ -59,28 +59,29 @@ test('no offer after reset', () => {
 
 test('no offer at max', () => {
   const w = fresh();
-  w.ctx.setLevel(118);
+  w.ctx.setLevel(108);
   w.tap('A');
   w.at(310000);
   assert.equal(w.ctx.state, 2);
   w.tap('A');
   assert.equal(w.ctx.state, 0);
-  assert.equal(w.ctx.cur().level, 118);
+  assert.equal(w.ctx.cur().level, 108);
 });
 
 test('offer to max', () => {
   const w = fresh();
-  w.ctx.setLevel(117);
+  // Level 107: 2 sets of 100 in 5:30 (the 30 s rest floor); the offer follows the finish ring.
+  w.ctx.setLevel(107);
   w.tap('A');
-  w.at(325000);
-  assert.equal(w.main(), '118 UP');
+  w.at(340000);
+  assert.equal(w.main(), '108 UP');
   w.tap('A');
   assert.equal(w.main(), '  GOAL');
   w.advance(2999);
   assert.equal(w.main(), '  GOAL');
   w.advance(1);
   assert.equal(w.day(), 'S1');
-  assert.equal(w.ctx.cur().level, 118);
+  assert.equal(w.ctx.cur().level, 108);
 });
 
 test('offer off screen', () => {

@@ -20,31 +20,32 @@ function checkRungs(ctx, p, cases) {
 
 test('rungs PUSH', () => {
   const ctx = loadClassic().ctx;
-  assert.equal(ctx.maxLevel(PUSH), 118);
+  // Rest floor 30 s a gap: 5 sets bottom out at 420 s, 4 at 390, 3 at 360, 2 at 330.
+  assert.equal(ctx.maxLevel(PUSH), 108);
   checkRungs(ctx, PUSH, {
     1: [5, 15, 600], 2: [5, 17, 600], 19: [5, 51, 600], 43: [5, 99, 600], 44: [5, 100, 600],
-    45: [5, 100, 585], 60: [5, 100, 360], 61: [4, 100, 600], 78: [4, 100, 345], 79: [3, 100, 600],
-    97: [3, 100, 330], 98: [2, 100, 600], 117: [2, 100, 315], 118: [1, 100, 300],
+    45: [5, 100, 585], 56: [5, 100, 420], 57: [4, 100, 600], 71: [4, 100, 390], 72: [3, 100, 600],
+    88: [3, 100, 360], 89: [2, 100, 600], 107: [2, 100, 330], 108: [1, 100, 300],
   });
 });
 
 test('rungs PULL', () => {
   const ctx = loadClassic().ctx;
-  assert.equal(ctx.maxLevel(PULL), 86);
+  assert.equal(ctx.maxLevel(PULL), 76);
   checkRungs(ctx, PULL, {
-    1: [5, 15, 360], 36: [5, 50, 360], 37: [5, 50, 345], 46: [5, 50, 210], 47: [4, 50, 360],
-    85: [2, 50, 165], 86: [1, 50, 150],
+    1: [5, 15, 360], 36: [5, 50, 360], 37: [5, 50, 345], 42: [5, 50, 270], 43: [4, 50, 360],
+    52: [3, 50, 360], 63: [2, 50, 360], 75: [2, 50, 180], 76: [1, 50, 150],
   });
 });
 
 test('rungs PLAnK', () => {
   const ctx = loadClassic().ctx;
-  assert.equal(ctx.maxLevel(PLANK), 125);
+  assert.equal(ctx.maxLevel(PLANK), 115);
   checkRungs(ctx, PLANK, {
-    1: [5, 50, 600], 2: [5, 55, 600], 51: [5, 300, 600], 52: [5, 300, 585], 67: [5, 300, 360],
-    68: [4, 300, 600], 124: [2, 300, 315], 125: [1, 300, 300],
+    1: [5, 50, 600], 2: [5, 55, 600], 51: [5, 300, 600], 52: [5, 300, 585], 63: [5, 300, 420],
+    64: [4, 300, 600], 114: [2, 300, 330], 115: [1, 300, 300],
   });
-  for (let n = 1; n <= 125; n++) {
+  for (let n = 1; n <= 115; n++) {
     const r = ctx.rungAt(PLANK, n);
     assert.equal(r.pace, 1, `level ${n} pace`);
     assert.equal(r.hold, 1, `level ${n} hold`);
@@ -60,7 +61,7 @@ test('rungs one set', () => {
 test('rungs short base', () => {
   const ctx = loadClassic().ctx;
   assert.equal(ctx.maxLevel(SHORT), 48);
-  checkRungs(ctx, SHORT, { 1: [5, 15, 300], 44: [5, 100, 360], 45: [4, 100, 345], 46: [3, 100, 330] });
+  checkRungs(ctx, SHORT, { 1: [5, 15, 300], 44: [5, 100, 420], 45: [4, 100, 390], 46: [3, 100, 360], 47: [2, 100, 330] });
 });
 
 test('out of range', () => {

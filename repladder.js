@@ -326,18 +326,21 @@ function maxLevel(p) {
   eachRung(p, function () { c++; return false; });
   return c;
 }
+// Rest never drops below 30 s between sets: about one phosphocreatine-refill half-time, inside ACSM's
+// <=90 s endurance range; shorter, the next set is mostly a continuation of the last one.
+var MIN_REST = 30;
 // Calls emit(total, length, sets) per level in order until it returns true: add stretch, sets S..2 at top, last set.
 function eachRung(p, emit) {
   var S = p.sets, T = p.top, P = p.hold ? 1 : p.pace, B = p.base;
   var step = p.hold ? S : Math.ceil(T / 50), t = p.hold ? 10 * S : S * (S + 1) / 2;
   for (;;) {
     t = Math.min(T, t);
-    if (emit(t, Math.max(B, t * P + 15 * (S - 1)), S)) return;
+    if (emit(t, Math.max(B, t * P + MIN_REST * (S - 1)), S)) return;
     if (t == T) break;
     t += step;
   }
   for (var s = S; s > 1; s--) {
-    var floor = T * P + 15 * (s - 1), L0 = Math.max(B, floor);
+    var floor = T * P + MIN_REST * (s - 1), L0 = Math.max(B, floor);
     if (s < S && emit(T, L0, s)) return;
     for (var len = L0 - 15; len >= floor; len -= 15) if (emit(T, len, s)) return;
   }

@@ -25,16 +25,16 @@ The face ships with five identical slots, `SLOt 1` to `SLOt 5`: reps, last level
 
 | Slot | Type | Ladder | Levels |
 | --- | --- | --- | --- |
-| push-ups | reps | 5 sets → 1 × 100, PACE 3, 10:00 | 118 |
-| pull-ups | reps | 5 sets → 1 × 50, PACE 3, 6:00 | 86 |
-| plank | hold | 5 holds → 1 × 5:00, 10:00 | 125 |
+| push-ups | reps | 5 sets → 1 × 100, PACE 3, 10:00 | 108 |
+| pull-ups | reps | 5 sets → 1 × 50, PACE 3, 6:00 | 76 |
+| plank | hold | 5 holds → 1 × 5:00, 10:00 | 115 |
 
 ## The ladder
 
 Every ladder climbs in three stretches, then ends at one set of the top total:
 
 1. **Add reps.** Starting sets stay fixed while the total grows from the easiest valid session to the top. Reps drop by one per set, so 5 sets start at 15 reps (5+4+3+2+1). The total grows by 1 rep per level, or more for big tops (Count ÷ 50, rounded up: +2 for 100). Holds start at 10 s per hold and grow 1 s per hold per level.
-2. **Cut rest.** The total stays at the top while the session gets 15 s shorter per level, down to 15 s of rest between sets.
+2. **Cut rest.** The total stays at the top while the session gets 15 s shorter per level, down to 30 s of rest between sets. Thirty seconds is about one refill half-time for the muscle's fast energy store (phosphocreatine), inside the ACSM's ≤90 s range for endurance training; shorter, the next set is mostly a continuation of the last.
 3. **Drop a set.** One fewer set, the session time resets, and the rest cuts start again, down to 2 sets.
 
 The last level is one set of the top total with no rest: Count × PACE, or the whole hold.
@@ -43,9 +43,9 @@ Key rungs of those three:
 
 | Slot | Top reached | 4 sets | 3 sets | 2 sets | Last level |
 | --- | --- | --- | --- | --- | --- |
-| push-ups | 44: 5 sets, 100 in 10:00 | 61 | 79 | 98 | 118: 1 × 100 in 5:00 |
-| pull-ups | 36: 5 sets, 50 in 6:00 | 47 | 59 | 72 | 86: 1 × 50 in 2:30 |
-| plank | 51: 5 × 60 s in 10:00 | 68 | 86 | 105 | 125: 1 × 5:00 |
+| push-ups | 44: 5 sets, 100 in 10:00 | 57 | 72 | 89 | 108: 1 × 100 in 5:00 |
+| pull-ups | 36: 5 sets, 50 in 6:00 | 43 | 52 | 63 | 76: 1 × 50 in 2:30 |
+| plank | 51: 5 × 60 s in 10:00 | 64 | 79 | 96 | 115: 1 × 5:00 |
 
 You never have to guess where to start: scroll LEVEL and the screen previews each level's sets and total, so stop at what you can do today.
 
