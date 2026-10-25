@@ -28,7 +28,7 @@ test('no intro while running', () => {
   w.at(2000);
   w.setActive(false);
   w.setActive(true);
-  assert.equal(w.main(), ' 10401');
+  assert.equal(w.main(), ' 21922');
 });
 
 test('idle screen', () => {
@@ -115,30 +115,26 @@ test('lead-in GO with one set of 100', () => {
   assert.equal(w.day(), ' 1');
 });
 
-test('work countdown', () => {
+test('work counts down to the next set', () => {
   const w = fresh();
   w.tap('A');
   w.at(0);
   assert.equal(w.day(), 'S1');
-  assert.equal(w.main(), ' 10601');
+  assert.equal(w.main(), ' 22122');
   assert.equal(w.colon, true);
   w.at(2999);
-  assert.equal(w.main(), ' 10401');
+  assert.equal(w.main(), ' 21922');
   w.at(3000);
-  assert.equal(w.main(), ' 10302');
-  w.at(9000);
-  assert.equal(w.main(), ' 05704');
-  w.at(9500);
-  assert.equal(w.main(), ' 05704');
+  assert.equal(w.main(), ' 21822');
   w.at(63000);
-  assert.equal(w.main(), ' 00322');
+  assert.equal(w.main(), ' 11822');
 });
 
 test('rest and LAP', () => {
   const w = fresh();
   w.tap('A');
   w.at(65999);
-  assert.equal(w.main(), ' 00122');
+  assert.equal(w.main(), ' 11622');
   w.at(66000);
   assert.equal(w.day(), 'r1');
   assert.equal(w.main(), ' 11521');
@@ -147,7 +143,7 @@ test('rest and LAP', () => {
   assert.equal(w.lap, false);
   w.at(546000);
   assert.equal(w.day(), 'S5');
-  assert.equal(w.main(), ' 05401');
+  assert.equal(w.main(), ' 05418');
   assert.equal(w.lap, false);
 });
 
@@ -168,7 +164,7 @@ test('one set of 100', () => {
   assert.equal(w.main(), '1000  ');
   w.tap('A');
   w.at(0);
-  assert.equal(w.main(), ' 50001');
+  assert.equal(w.main(), ' 500  ');
   w.at(297000);
   assert.equal(w.main(), ' 003  ');
   assert.equal(w.day(), 'S1');
@@ -185,7 +181,12 @@ test('fractional rest', () => {
   assert.equal(w.main(), ' 00126');
   w.at(181333);
   assert.equal(w.day(), 'S2');
-  assert.equal(w.main(), ' 11801');
+  assert.equal(w.main(), ' 25926');
+  // The next set starts at 359667 ms, so the clock ticks on its seconds, not the work end's.
+  w.at(181666);
+  assert.equal(w.main(), ' 25926');
+  w.at(181667);
+  assert.equal(w.main(), ' 25826');
   for (let ms = 0; ms <= 601000; ms += 250) {
     w.at(ms);
     if (w.main() === ' donE ') {

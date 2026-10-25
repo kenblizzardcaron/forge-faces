@@ -2,7 +2,7 @@
 
 [Source](repladder.js) · upload [repladder.min.js](repladder.min.js) to the watch · [Open in emulator](https://kenblizzardcaron.github.io/forge-faces/?face=repladder) · [All faces](README.md)
 
-A progression coach for your wrist, for push-ups, pull-ups, planks or any exercise you count in reps or hold for time. Each session splits the work into sets, paces them with beeps at every work and rest change, and counts reps up (or a hold down) as you go, so you stay on tempo without watching the screen.
+A progression coach for your wrist, for push-ups, pull-ups, planks or any exercise you count in reps or hold for time. Each session splits the work into sets, paces them with beeps at every work and rest change, and counts down to the next set (or through a hold), so if you finish a set early you can see how long you have before the next one starts.
 
 The face holds five **slots**, one per exercise. In each slot you choose reps or a hold and the **last level**, always one set: 1 × 50 pull-ups, 1 × 100 push-ups, a single 5:00 plank. The slot works out a ladder of levels that climbs to it, and remembers your level. Level numbers only mean something within their own slot.
 
@@ -79,7 +79,7 @@ Reps split into declining sets; when the total doesn't divide evenly, the extra 
 | Offer | `UP` and the next level on the main digits (`UP  40`) after a ladder finish below the last level |
 | Last level | `GOAL` for 3 s when you accept the slot's last level |
 | Lead-in | 5 to 1 on the day digits while the main digits spell out the session, one per second: `rEP 91` (or `HOLd`), `10:00`, `SEtS 5`, `LEU 39`, then `GO` with set 1's reps (`GO  21`). At level 0, `PACE 3` in place of the level (`oFF` for a hold) |
-| Work | `S3`, time left and the rep you should be on, counting up once per PACE seconds; a hold shows only its time left |
+| Work | `S3`, time until the next set starts (work plus the rest after it; until the end on the last set) and this set's reps; the beep still marks the end of the work at PACE. A hold shows only its time left |
 | Rest | `r2`, rest left and next set's reps (or hold seconds), with LAP blinking |
 | Done | `donE` |
 

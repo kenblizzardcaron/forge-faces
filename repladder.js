@@ -131,10 +131,11 @@ function draw() {
     var i = phaseAt(current, elapsed()), left = Math.ceil((current.ends[i] - elapsed()) / 1000);
     colon = true;
     if (i % 2 == 0) {
-      // Work counts reps up, one per pace; holds show only the countdown. Changes land on a countdown second.
-      var rep = Math.floor((elapsed() - (i ? current.ends[i - 1] : 0)) / (session.pace * 1000)) + 1;
+      // Rep work counts down to the next set's start (the end on the last set), so finishing early shows the
+      // time in hand; the set's reps sit beside it. Holds show only the hold's own countdown.
       day = 'S' + (i / 2 + 1);
-      main = fmtTime(left) + (session.hold ? '  ' : fmtReps(Math.min(rep, current.reps[i / 2])));
+      if (!session.hold) left = Math.ceil((current.ends[Math.min(i + 1, current.ends.length - 1)] - elapsed()) / 1000);
+      main = fmtTime(left) + (session.hold ? '  ' : fmtReps(current.reps[i / 2]));
     } else {
       day = 'r' + ((i + 1) / 2);
       main = fmtTime(left) + fmtReps(current.reps[(i + 1) / 2]);
@@ -158,8 +159,10 @@ function schedule() {
   // Paused: the clock is frozen, so only the flash end needs a wakeup.
   if (state == RUNNING && !paused) {
     i = e < 0 ? -1 : phaseAt(current, e);
-    // A second change never passes a phase end, so the phase end is covered too.
+    // A second change never passes a phase end, so the phase end is covered too. Rep work also wakes on
+    // the next set's seconds, which a fractional rest puts off the phase end's.
     d = earliest(d, e < 0 ? secondStep(-e) : secondStep(current.ends[i] - e));
+    if (e >= 0 && i % 2 == 0 && !session.hold && i + 1 < current.ends.length) d = earliest(d, secondStep(current.ends[i + 1] - e));
     if (e >= 0 && i % 2 == 1) d = earliest(d, 500 - now() % 500);
   }
   if (d) displayTimer = Ollee.setTimeout(redraw, d);

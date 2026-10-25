@@ -61,7 +61,7 @@ test('return shows the right screen', () => {
   const before = kinds(w, 'beep').length;
   w.setActive(true);
   assert.equal(w.day(), 'S3');
-  assert.equal(w.main(), ' 03908');
+  assert.equal(w.main(), ' 15420');
   assert.equal(kinds(w, 'beep').length, before);
 });
 
