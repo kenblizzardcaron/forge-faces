@@ -1,15 +1,15 @@
 // Rep Ladder: a set-by-set rep ladder timer with a work/rest session plan.
 // Upload repladder.min.js, the built copy of this file.
 const subscribe = E_BUTTONS + E_A_LONG;
-var settings = { level: 25, goal: 100, base: 600, total: 50, length: 600, sets: 5, pace: 3 };
+var settings = { level: 25, base: 600, total: 50, length: 600, sets: 5, pace: 3 };
 
 var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3, OFFER = 4;
 var state = IDLE, startAt = 0, paused = false, pausedAt = 0, current = null, lastPhase = -1, message = '', messageUntil = 0;
 var displayTimer = -1, longFired = 0, hush = 0;
 // Edit: L cycles fields; A steps the current one, and holding A repeats every 100 ms on its own slot.
-var FIELDS = ['level', 'goal', 'total', 'length', 'sets', 'pace'];
-var WORDS = ['LEUEL', 'GOAL', 'Count', 'LEn', 'SEtS', 'PACE'];
-var LIMITS = [[0, 100, 1], [10, 100, 1], [1, 999, 1], [15, 5985, 15], [1, 9, 1], [1, 20, 1]];
+var FIELDS = ['level', 'total', 'length', 'sets', 'pace'];
+var WORDS = ['LEUEL', 'Count', 'LEn', 'SEtS', 'PACE'];
+var LIMITS = [[0, 100, 1], [1, 999, 1], [15, 5985, 15], [1, 9, 1], [1, 20, 1]];
 var field = 0, repeatTimer = -1;
 // Finish ring: stock triple, 125 ms steps, beeping on steps 0-2 of each 8; own timer slot.
 var RING_STEP_MS = 125, ringTimer = -1, ringStepNo = 0, ringSteps = 0, cue = 6;
@@ -27,11 +27,11 @@ function flash(word, ms) { message = word; messageUntil = now() + (ms || 1000); 
 function secondStep(msLeft) { return msLeft - 1000 * (Math.ceil(msLeft / 1000) - 1); }
 function earliest(d, x) { return d && d < x ? d : x; }
 
-// One beep per work/rest change; the last phase end rings the finish and sets OFFER below the goal, else DONE.
+// One beep per work/rest change; the last phase end rings the finish and sets OFFER below level 100, else DONE.
 function onPhase(i) {
   lastPhase = i;
   if (i == current.ends.length) {
-    state = settings.level > 0 && settings.level < settings.goal ? OFFER : DONE;
+    state = settings.level > 0 && settings.level < 100 ? OFFER : DONE;
     startRing(Ollee.active()); updateSubscriptions(); return;
   }
   Ollee.beep();
@@ -83,15 +83,15 @@ function draw() {
     colon = true;
   } else if (state == EDIT) {
     var q = plan(settings.total, settings.length, settings.sets, settings.pace), v = settings[FIELDS[field]];
-    if (field < 2) {
+    if (field == 0) {
       // The first day digit only shows 1-3, so a level's set 1 reps show here only when under 40.
       var r = v ? rung(v, settings.base) : null, lr = r ? plan(r.total, r.length, r.sets, r.pace) : null;
       day = lr && lr.reps[0] < 40 ? String(lr.reps[0]) : '  ';
       main = v ? String(v) : 'oFF';
     } else {
       day = q ? fmtReps(q.reps[0]) : 'Er';
-      main = field == 3 ? fmtTime(settings.level ? settings.base : settings.length) + '  ' : ('      ' + v).slice(-6);
-      colon = field == 3;
+      main = field == 2 ? fmtTime(settings.level ? settings.base : settings.length) + '  ' : ('      ' + v).slice(-6);
+      colon = field == 2;
     }
   } else if (state == OFFER && ringTimer == -1) {
     day = '  ';
@@ -180,7 +180,7 @@ function setLevel(n) {
 }
 // Steps the current field by its increment, wrapping to the minimum past the maximum; levels 1-9 become 10.
 function bump() {
-  var lim = LIMITS[field], onLevel = field == 3 && settings.level > 0, key = onLevel ? 'base' : FIELDS[field];
+  var lim = LIMITS[field], onLevel = field == 2 && settings.level > 0, key = onLevel ? 'base' : FIELDS[field];
   var v = settings[key] + lim[2];
   if (v > lim[1]) v = lim[0];
   if (field == 0 && v > 0 && v < 10) v = 10;
@@ -188,12 +188,11 @@ function bump() {
   else if (onLevel) { settings.base = v; setLevel(settings.level); }
   else settings[key] = v;
 }
-// L in EDIT: on a level, Level -> Goal -> LEn -> idle; at level 0, Level -> Count -> LEn -> SEtS -> PACE -> idle.
+// L in EDIT: on a level, Level -> LEn -> idle; at level 0, Level -> Count -> LEn -> SEtS -> PACE -> idle.
 function nextField() {
   var f = field + 1;
-  if (field == 0 && !settings.level) f = 2;
-  if (field == 1) f = settings.level ? 3 : FIELDS.length;
-  if (field == 3 && settings.level) f = FIELDS.length;
+  if (field == 0 && settings.level) f = 2;
+  if (field == 2 && settings.level) f = FIELDS.length;
   if (f == FIELDS.length) { field = 0; state = IDLE; }
   else { field = f; flash(WORDS[f]); }
 }
@@ -234,7 +233,7 @@ function button(b, e) {
     else if (state == OFFER && b == B_A) {
       setLevel(settings.level + 1);
       state = IDLE;
-      if (settings.level == settings.goal) flash('GOAL', 3000);
+      if (settings.level == 100) flash('GOAL', 3000);
     }
     else if (state == OFFER && b == B_L) state = IDLE;
   }

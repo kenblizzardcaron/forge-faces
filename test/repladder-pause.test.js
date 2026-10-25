@@ -5,7 +5,7 @@ const { loadFace } = require('../tools/harness');
 // Fresh face; at(ms) advances the fake clock until elapsed() equals ms.
 function fresh() {
   const w = loadFace('repladder.js');
-  w.ctx.settings = { level: 0, goal: 50, total: 100, length: 600, sets: 5, pace: 3 };
+  w.ctx.settings = { level: 0, total: 100, length: 600, sets: 5, pace: 3 };
   w.ctx.draw();
   w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
   return w;
