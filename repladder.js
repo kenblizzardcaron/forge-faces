@@ -113,8 +113,8 @@ function draw() {
   } else if (state == RUNNING && elapsed() < 0) {
     // Countdown on the day digits; the main digits spell out the session, one item per second, then GO with set 1's reps.
     var s = Math.ceil(-elapsed() / 1000), lv = cur().level;
-    var items = ['rEP' + pad3(session.total), fmtTime(session.length) + '  ', 'SEtS ' + session.sets,
-      lv ? 'LEU' + pad3(lv) : 'PACE' + ('  ' + session.pace).slice(-2), 'GO' + ('    ' + current.reps[0]).slice(-4)];
+    var items = [session.hold ? '  HOLd' : 'rEP' + pad3(session.total), fmtTime(session.length) + '  ', 'SEtS ' + session.sets,
+      lv ? 'LEU' + pad3(lv) : session.hold ? '   oFF' : 'PACE' + ('  ' + session.pace).slice(-2), 'GO' + ('    ' + current.reps[0]).slice(-4)];
     var k = Math.max(0, Math.min(4, 5 - s));
     day = ' ' + Math.min(s, 5);
     main = items[k];
@@ -123,10 +123,10 @@ function draw() {
     var i = phaseAt(current, elapsed()), left = Math.ceil((current.ends[i] - elapsed()) / 1000);
     colon = true;
     if (i % 2 == 0) {
-      // Work counts reps up, one per pace (the session only changes in idle); each change lands on a countdown second.
+      // Work counts reps up, one per pace; holds show only the countdown. Changes land on a countdown second.
       var rep = Math.floor((elapsed() - (i ? current.ends[i - 1] : 0)) / (session.pace * 1000)) + 1;
       day = 'S' + (i / 2 + 1);
-      main = fmtTime(left) + fmtReps(Math.min(rep, current.reps[i / 2]));
+      main = fmtTime(left) + (session.hold ? '  ' : fmtReps(Math.min(rep, current.reps[i / 2])));
     } else {
       day = 'r' + ((i + 1) / 2);
       main = fmtTime(left) + fmtReps(current.reps[(i + 1) / 2]);
@@ -169,7 +169,7 @@ function enter() {
   Ollee.clear();
   displayTimer = -1;
   catchUp();
-  if (state == IDLE) flash('LAddEr'); else draw();
+  if (state == IDLE) flash(('      ' + cur().name).slice(-6)); else draw();
 }
 // The platform cancels timers when the face leaves the screen.
 function exit() { displayTimer = -1; ringTimer = -1; repeatTimer = -1; }

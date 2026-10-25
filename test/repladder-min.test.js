@@ -4,7 +4,7 @@ const { loadFace } = require('../tools/harness');
 
 test('minified build starts and beeps', () => {
   const w = loadFace('repladder.min.js');
-  assert.equal(w.main(), 'LAddEr');
+  assert.equal(w.main(), '  PUSH');
   w.advance(1000);
   assert.equal(w.main(), '100013');
   w.tap('A');

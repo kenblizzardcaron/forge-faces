@@ -14,7 +14,7 @@ function fresh() {
 
 test('intro', () => {
   const w = loadFace('repladder.js');
-  assert.equal(w.main(), 'LAddEr');
+  assert.equal(w.main(), '  PUSH');
   assert.equal(w.colon, false);
   w.advance(1000);
   assert.equal(w.main(), '100013');
