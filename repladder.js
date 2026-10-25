@@ -242,14 +242,15 @@ function button(b, e) {
   draw();
 }
 
-// Rep split: earlier sets take the extra reps. Returns null if a set would have under 1 rep or work overruns length.
-function plan(total, length, sets, pace) {
+// Rep split: earlier sets take the extra reps. Holds split seconds the same way (pace 1).
+// Returns null if a set would have under 1 rep or work overruns length.
+function plan(total, length, sets, pace, hold) {
   var n = sets;
   var base = Math.floor((total + n * (n - 1) / 2) / n);
   var extra = total - (n * base - n * (n - 1) / 2);
   var reps = [];
   for (var k = 0; k < n; k++) {
-    var r = base - k + (k < extra ? 1 : 0);
+    var r = hold ? Math.floor(total / n) + (k < total % n ? 1 : 0) : base - k + (k < extra ? 1 : 0);
     if (r < 1) return null;
     reps.push(r);
   }
@@ -268,6 +269,40 @@ function plan(total, length, sets, pace) {
     }
   }
   return { reps: reps, ends: ends };
+}
+// Level n of profile p's ladder, or null outside 1..maxLevel(p).
+function rungAt(p, n) {
+  var c = 0, out = null;
+  if (n < 1) return null;
+  eachRung(p, function (total, length, sets) {
+    if (++c < n) return false;
+    out = { total: total, length: length, sets: sets, pace: p.hold ? 1 : p.pace, hold: p.hold };
+    return true;
+  });
+  return out;
+}
+// Number of levels in profile p's ladder.
+function maxLevel(p) {
+  var c = 0;
+  eachRung(p, function () { c++; return false; });
+  return c;
+}
+// Calls emit(total, length, sets) per level in order until it returns true: add stretch, sets S..2 at top, last set.
+function eachRung(p, emit) {
+  var S = p.sets, T = p.top, P = p.hold ? 1 : p.pace, B = p.base;
+  var step = p.hold ? S : Math.ceil(T / 50), t = p.hold ? 10 * S : S * (S + 1) / 2;
+  for (;;) {
+    t = Math.min(T, t);
+    if (emit(t, Math.max(B, t * P + 15 * (S - 1)), S)) return;
+    if (t == T) break;
+    t += step;
+  }
+  for (var s = S; s > 1; s--) {
+    var floor = T * P + 15 * (s - 1), L0 = Math.max(B, floor);
+    if (s < S && emit(T, L0, s)) return;
+    for (var len = L0 - 15; len >= floor; len -= 15) if (emit(T, len, s)) return;
+  }
+  emit(T, T * P, 1);
 }
 // Set-drop levels; each phase trims LEn 15 s per level from base (5 sets continue on from level 50).
 var PHASES = [50, 60, 70, 80];
