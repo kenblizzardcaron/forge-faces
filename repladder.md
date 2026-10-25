@@ -2,47 +2,55 @@
 
 [Source](repladder.js) · upload [repladder.min.js](repladder.min.js) to the watch · [Open in emulator](https://kenblizzardcaron.github.io/forge-faces/?face=repladder) · [All faces](README.md)
 
-A rep-based progression coach for your wrist, for push-ups, squats, pull-ups or any exercise you count in reps. Each session splits your reps into declining sets (22, 21, 20, 19, 18), paces them with beeps at every work and rest change, and counts reps up as you go, so you stay on tempo without watching the screen.
+A progression coach for your wrist, for push-ups, pull-ups, planks or any exercise you count in reps or hold for time. Each session splits the work into sets, paces them with beeps at every work and rest change, and counts reps up (or a hold down) as you go, so you stay on tempo without watching the screen.
 
-The face runs in one of two modes, picked by LEVEL:
+The face holds several **profiles**, one per exercise. Each profile has its own ladder of levels, computed from a few settings, and remembers its own level. Level numbers only mean something within their own profile.
 
-- **Ladder (LEVEL 10–100, the default):** LEVEL picks the whole session from a fixed 100-level ladder, from 20 reps in five sets up to 100 in a single set. Level 45 means the same session for everyone. After each session the face offers the next level (two more reps, a little less rest, or one fewer set): **A** steps up, **L** stays put.
-- **Manual (LEVEL 0, shown as `oFF`):** no ladder and no offer. You set COUNT, LEn, SEtS and PACE yourself.
+Each profile runs in one of two modes, picked by LEVEL:
 
-## Settings
+- **Ladder (LEVEL 1 and up, the default):** LEVEL picks the whole session from the profile's ladder. After each session the face offers the next level, a small step: a couple more reps, a little less rest, or one fewer set. **A** steps up, **L** stays put.
+- **Manual (LEVEL 0, shown as `oFF`):** no ladder and no offer. Count, SEtS, PACE and LEn are the session itself.
 
-Edit with **L** in idle. **A** raises the value (hold to repeat; it wraps to the minimum after the maximum).
+## Profiles
 
-| Field | Default | Range | Edited in |
-| --- | --- | --- | --- |
-| **LEVEL** (ladder rung, or 0 for manual) | 25 | 0, 10–100 | both modes |
-| **LEn** (session time) | 10:00 | 0:15–99:45, 15 s steps | both modes; on a level, the time every rung starts from |
-| **COUNT** (total reps) | 50 | 1–999 | manual only; a level sets it |
-| **SEtS** (sets) | 5 | 1–9 | manual only; a level sets it |
-| **PACE** (seconds per rep) | 3 | 1–20 | manual only; a level sets it |
+| Setting | On a level | At LEVEL 0 |
+| --- | --- | --- |
+| **Count** (top) | the top total the ladder climbs to: reps, or seconds for a hold | total reps, or seconds for a hold |
+| **SEtS** | starting sets of the ladder (1–9) | sets |
+| **PACE** | seconds per rep (1–20); holds have none | seconds per rep |
+| **LEn** | session time every rung starts from (0:15–99:45, 15 s steps) | session length |
 
-Reps drop by one per set; when the total doesn't divide evenly, the extra reps go to the first sets (100 in 4 sets → 27, 26, 24, 23). Rest is split evenly between sets, with none after the last.
+A profile is either a **reps** profile or a **hold** profile; that's fixed by the build (see [local.json](#localjson)). The face ships with three:
 
-## Levels
+| Slot | Profile | Type | Ladder | Levels | Starts at |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `PUSH` | reps | 5 sets → 1 × 100, PACE 3, 10:00 | 118 | level 19 (51 reps) |
+| 2 | `PULL` | reps | 5 sets → 1 × 50, PACE 3, 6:00 | 86 | level 1 |
+| 3 | `PLAnK` | hold | 5 holds → 1 × 5:00, 10:00 | 125 | level 1 |
 
-A level sets COUNT, LEn, SEtS and PACE from this ladder. Every rung uses PACE 3.
+## The ladder
 
-| Levels | Sets | COUNT | LEn | Step per level |
-| --- | --- | --- | --- | --- |
-| 10–50 | 5 | level × 2 (20 → 100) | LEn (10:00 default) | +2 reps |
-| 51–59 | 5 | 100 | 9:45 → 7:45 | LEn − 15 s per level |
-| 60–69 | 4 | 100 | 10:00 → 7:45 | LEn − 15 s per level (60 resets to 10:00) |
-| 70–79 | 3 | 100 | 10:00 → 7:45 | LEn − 15 s per level (70 resets to 10:00) |
-| 80–99 | 2 | 100 | 10:00 → 5:15 | LEn − 15 s per level (80 resets to 10:00) |
-| 100 | 1 | 100 | 5:00 | one set of 100 |
+Every ladder climbs in three stretches, then ends at one set of the top total:
 
-The times above assume the default LEn of 10:00; a different LEn shifts every rung but level 100 by the same amount.
+1. **Add reps.** Starting sets stay fixed while the total grows from the easiest valid session to the top. Reps drop by one per set, so 5 sets start at 15 reps (5+4+3+2+1). The total grows by 1 rep per level, or more for big tops (Count ÷ 50, rounded up: +2 for 100). Holds start at 10 s per hold and grow 1 s per hold per level.
+2. **Cut rest.** The total stays at the top while the session gets 15 s shorter per level, down to 15 s of rest between sets.
+3. **Drop a set.** One fewer set, the session time resets, and the rest cuts start again, down to 2 sets.
 
-Levels 1–9 don't exist, since 5 sets need at least 15 reps; the level steps 0, 10, 11, … 100 and wraps to 0.
+The last level is one set of the top total with no rest: Count × PACE, or the whole hold.
 
-Level 0 is manual mode: your own COUNT, LEn, SEtS and PACE.
+Key rungs of the shipped profiles:
 
-The first day digit can only show 1–3, so levels live on the main digits.
+| Profile | Top reached | 4 sets | 3 sets | 2 sets | Last level |
+| --- | --- | --- | --- | --- | --- |
+| `PUSH` | 44: 5 sets, 100 in 10:00 | 61 | 79 | 98 | 118: 1 × 100 in 5:00 |
+| `PULL` | 36: 5 sets, 50 in 6:00 | 47 | 59 | 72 | 86: 1 × 50 in 2:30 |
+| `PLAnK` | 51: 5 × 60 s in 10:00 | 68 | 86 | 105 | 125: 1 × 5:00 |
+
+You never have to guess where to start: scroll LEVEL and the screen previews each level's sets and total, so stop at what you can do today.
+
+Changing Count, SEtS, PACE or LEn on a level reshapes the ladder. Count can't go below the ladder's easiest session, the level moves down if the ladder got shorter, and a change that would make the ladder longer than 999 levels wraps that field back to its minimum. Every level runs.
+
+Reps split into declining sets; when the total doesn't divide evenly, the extra reps go to the first sets (100 in 4 sets → 27, 26, 24, 23). Holds are equal (5:00 in 4 holds → 75 s each). Rest is split evenly between sets, with none after the last.
 
 ## Buttons
 
@@ -51,27 +59,28 @@ The first day digit can only show 1–3, so levels live on the main digits.
 | **A** (idle) | Start, with a 5 s lead-in that shows the session |
 | **A** (running) | Pause / resume |
 | **L** (paused) | Reset |
-| **L** (idle) | Edit: LEVEL → LEn → done on a level, or LEVEL → COUNT → LEn → SEtS → PACE → done at level 0 |
-| **A** (editing) | Raise the value (hold to repeat) |
+| **L** (idle) | Edit: PROFILE → LEVEL → Count → SEtS → PACE → LEn → done (holds skip PACE) |
+| **A** (editing) | Raise the value (hold to repeat; it wraps to the minimum after the maximum) |
 | **A** (offer) | Accept the next level and return to idle |
 | **L** (offer) | Keep the level and return to idle |
-| Any button (finish beeping) | Silence and return to idle; after a ladder finish below level 100, the offer follows |
+| Any button (finish beeping) | Silence and return to idle; after a ladder finish below the last level, the offer follows |
 
 ## Screen
 
 | Screen | Shows |
 | --- | --- |
-| Intro | `LAddEr` for 1 s when the face opens idle; any button skips it |
-| Idle | `S1` on the day digits (S for set, so it reads like `51`), total time and set 1's reps on the main digits (`10:00 12`); `Er` when the settings can't work |
-| Edit LEVEL | The number on the main digits, with set 1's reps on the day digits when under 40 (`oFF` at level 0) |
-| Offer | `UP` and the next level on the main digits (`UP  46`) after a ladder finish below level 100 |
-| Top reached | `GOAL` for 3 s when you accept level 100 |
-| Lead-in | 5 to 1 on the day digits while the main digits spell out the session, one per second: `rEP 90`, `10:00`, `SEtS 5`, `LEU 45` (level 45), then `GO` with set 1's reps (`GO  20`), since work counts reps up and hides the target (at level 0, `PACE 3` in place of the level) |
-| Work | `S3`, time left and the rep you should be on, counting up once per PACE seconds |
-| Rest | `r2`, rest left and next set's reps, with LAP blinking |
+| Intro | The profile's name (`PUSH`) for 1 s when the face opens idle; any button skips it |
+| Idle | `S1` on the day digits (S for set, so it reads like `51`), total time and set 1's reps (or hold seconds) on the main digits (`10:00 21`); `Er` when manual settings can't work |
+| Edit PROFILE | The slot number on the day digits and the profile's name on the main digits |
+| Edit LEVEL | The level's sets on the day digits, the level and its total on the main digits (` 39 91`); `oFF` at level 0 |
+| Offer | `UP` and the next level on the main digits (`UP  40`) after a ladder finish below the last level |
+| Last level | `GOAL` for 3 s when you accept the profile's last level |
+| Lead-in | 5 to 1 on the day digits while the main digits spell out the session, one per second: `rEP 91` (or `HOLd`), `10:00`, `SEtS 5`, `LEU 39`, then `GO` with set 1's reps (`GO  21`). At level 0, `PACE 3` in place of the level (`oFF` for a hold) |
+| Work | `S3`, time left and the rep you should be on, counting up once per PACE seconds; a hold shows only its time left |
+| Rest | `r2`, rest left and next set's reps (or hold seconds), with LAP blinking |
 | Done | `donE` |
 
-Each edit field and control shows its word for 1 s, or until the next press. The LCD can't draw a V, so LEVEL reads `LEUEL`; the others are `Count`, `LEn`, `SEtS`, `PACE`, `PAUSE`, `rESEt` and `Error`. At level 100 and at level 0, the finish has no offer.
+Each edit field and control shows its word for 1 s, or until the next press. The LCD can't draw a V, so LEVEL reads `LEUEL`; the others are `Count`, `SEtS`, `PACE`, `LEn`, `PAUSE`, `rESEt` and `Error`. At the last level and at level 0, the finish has no offer.
 
 ## Sounds
 
@@ -83,4 +92,18 @@ Each edit field and control shows its word for 1 s, or until the next press. The
 
 Forge only wakes a background face once a minute, so a change while you're on another face beeps at the next minute tick (one beep, however many changes were missed). The face shows the right time when you come back.
 
-Settings reset to defaults (level 25) when the watch reboots or the face is uploaded (Forge has no storage yet). Type your level back in through LEVEL.
+## local.json
+
+Forge has no storage yet, so on-watch edits last until the watch reboots or the face is uploaded; then the built-in profiles come back. To keep your own, bake them into a personal build with a `local.json` (see [All faces](README.md)):
+
+```json
+{"repladder": {"profile": 0, "profiles": [
+  {"name": "PUSH", "sets": 5, "top": 100, "pace": 3, "base": 600, "level": 39},
+  {"name": "PULL", "top": 50, "base": 360},
+  {"name": "PLAnK", "hold": 1, "top": 300}
+]}}
+```
+
+`profiles` replaces the whole list. Each profile needs a `name` (up to 6 LCD characters); the rest default to `hold: 0, sets: 5, top: 100, pace: 3, base: 600, level: 1`, with `top` and `base` in seconds where they're times. `profile` picks the slot the face boots on, counting from 0. A misspelled key, a nameless profile or a `profile` past the list fails the build.
+
+Level numbers changed when the ladder became computed (the old fixed ladder had level 45 at 90 push-ups; on `PUSH` that's now about level 39), so set your level again after upgrading.

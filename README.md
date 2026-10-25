@@ -6,7 +6,7 @@ Custom watch faces for the [Ollee Watch](https://www.olleewatch.com), written fo
 | Face | Guide | Try it | What it does |
 | --- | --- | --- | --- |
 | [multitimer.js](multitimer.js) (upload [multitimer.min.js](multitimer.min.js)) | [multitimer.md](multitimer.md) | [Open in emulator](https://kenblizzardcaron.github.io/forge-faces/?face=multitimer) | Feature-parity replacement for the official TIMER face, with up to three timers running at once. |
-| [repladder.js](repladder.js) (upload [repladder.min.js](repladder.min.js)) | [repladder.md](repladder.md) | [Open in emulator](https://kenblizzardcaron.github.io/forge-faces/?face=repladder) | Rep-based progression coach for any counted exercise: paced, declining sets with beeps and a rep count-up, plus a 100-level ladder from 20 reps to 100 in one set that offers a small step up after each session. |
+| [repladder.js](repladder.js) (upload [repladder.min.js](repladder.min.js)) | [repladder.md](repladder.md) | [Open in emulator](https://kenblizzardcaron.github.io/forge-faces/?face=repladder) | Progression coach for counted or timed exercises: paced sets with beeps and a rep count-up (or hold countdown), with per-exercise profiles whose computed ladders offer a small step up after each session. |
 
 ## Try a face
 
@@ -24,7 +24,7 @@ Each face comes as readable source (`name.js`) and a minified build (`name.min.j
 
 To rebuild both faces after editing their source: `npm install terser@5 && node build.js`; run the tests with `node --test`. Top-level names are shortened; the hook names the watch calls and `subscribe` are kept.
 
-To bake your own defaults into a personal build, put them in a `local.json` (gitignored), e.g. `{"repladder": {"level": 45}}`; `node build.js` then also writes `repladder-local.min.js` (gitignored) to upload instead, plus `repladder-local.js` so a local emulator opens it with `?face=repladder-local`. Keys are the names in the face's `var settings` line, and a misspelled key fails the build.
+To bake your own defaults into a personal build, put them in a `local.json` (gitignored), e.g. `{"repladder": {"profiles": [{"name": "PUSH", "level": 39}]}}` (see [repladder.md](repladder.md#localjson)); `node build.js` then also writes `repladder-local.min.js` (gitignored) to upload instead, plus `repladder-local.js` so a local emulator opens it with `?face=repladder-local`. Keys are the names in the face's `var settings` line (plus `profiles` for repladder), and a misspelled key fails the build.
 
 ## Hosted emulator
 
