@@ -30,9 +30,9 @@ test('hold lead-in', () => {
   assert.equal(w.day(), ' 4');
   assert.equal(w.colon, true);
   w.advance(1000);
-  assert.equal(w.main(), 'SEtS 5');
+  assert.equal(w.main(), '5 SEtS');
   w.advance(1000);
-  assert.equal(w.main(), 'LEU  1');
+  assert.equal(w.main(), ' 1 LEU');
   w.advance(1000);
   assert.equal(w.main(), 'GO  10');
   assert.equal(w.day(), ' 1');

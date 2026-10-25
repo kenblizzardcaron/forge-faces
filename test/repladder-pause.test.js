@@ -19,7 +19,7 @@ test('pause in lead-in', () => {
   w.tap('A');
   assert.equal(w.main(), ' PAUSE');
   w.advance(1000);
-  assert.equal(w.main(), 'SEtS 5');
+  assert.equal(w.main(), '5 SEtS');
   assert.equal(w.day(), ' 3');
   w.advance(10000);
   assert.equal(kinds(w, 'short').length, 3);

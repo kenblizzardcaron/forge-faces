@@ -12,7 +12,7 @@ var displayTimer = -1, longFired = 0, hush = 0;
 // Edit: L cycles fields; A steps the current one, and holding A repeats every 100 ms on its own slot.
 // PROFILE and TYPE flash no word; TYPE shows reps or a hold. Top's range comes from topRange().
 var FIELDS = ['profile', 'hold', 'top', 'level', 'sets', 'pace', 'base'];
-var WORDS = { level: 'LEUEL', sets: 'SEtS', pace: 'PACE', base: 'LEn' };
+var WORDS = { level: 'LEUEL', sets: 'SEtS', pace: 'PACE ', base: 'LEn' };
 var LIMITS = { sets: [1, 9, 1], pace: [1, 20, 1], base: [15, 5985, 15] };
 var field = 0, repeatTimer = -1;
 // Finish ring: stock triple, 125 ms steps, beeping on steps 0-2 of each 8; own timer slot.
@@ -24,6 +24,9 @@ function pad3(n) { return ('  ' + n).slice(-3); }
 // m:ss from seconds, with m padded to two chars; reps over 99 blank out.
 function fmtTime(secs) { var m = Math.floor(secs / 60); return (m < 10 ? ' ' : '') + m + pad(secs % 60); }
 function fmtReps(r) { return r > 99 ? '  ' : pad(r); }
+// "91 rEP", "5 SEtS": number first, so main cells 0 and 2 (whose top and bottom bars share a driver)
+// hold digits, which light both bars anyway; a letter there would gain or lose a bar.
+function tag(n, word) { var s = n + ' ' + word; return ('      ' + (s.length > 6 ? n + word : s)).slice(-6); }
 function elapsed() { return (paused ? pausedAt : now()) - startAt; }
 function flashing() { return now() < messageUntil; }
 function flash(word, ms) { message = word; messageUntil = now() + (ms || 1000); draw(); }
@@ -82,7 +85,7 @@ function preview(s) {
 function draw() {
   if (!Ollee.active()) return;
   sync();
-  var day = '  ', main = ' donE', colon = false, lap = false;
+  var day = '  ', main = ' donE ', colon = false, lap = false;
   if (state == IDLE) {
     var p = plan(session.total, session.length, session.sets, session.pace, session.hold);
     day = p ? 'S1' : 'Er';
@@ -113,13 +116,13 @@ function draw() {
     }
   } else if (state == OFFER && ringTimer == -1) {
     day = '  ';
-    main = 'UP' + ('    ' + (cur().level + 1)).slice(-4);
+    main = tag(cur().level + 1, 'UP');
     colon = false;
   } else if (state == RUNNING && elapsed() < 0) {
     // Countdown on the day digits; the main digits spell out the session, one item per second, then GO with set 1's reps.
     var s = Math.ceil(-elapsed() / 1000), lv = cur().level;
-    var items = [session.hold ? '  HOLd' : 'rEP' + pad3(session.total), fmtTime(session.length) + '  ', 'SEtS ' + session.sets,
-      lv ? 'LEU' + pad3(lv) : session.hold ? '   oFF' : 'PACE' + ('  ' + session.pace).slice(-2), 'GO' + ('    ' + current.reps[0]).slice(-4)];
+    var items = [session.hold ? '  HOLd' : tag(session.total, 'rEP'), fmtTime(session.length) + '  ', tag(session.sets, 'SEtS'),
+      lv ? tag(lv, 'LEU') : session.hold ? '   oFF' : tag(session.pace, 'SEC'), 'GO' + ('    ' + current.reps[0]).slice(-4)];
     var k = Math.max(0, Math.min(4, 5 - s));
     day = ' ' + Math.min(s, 5);
     main = items[k];
@@ -221,7 +224,8 @@ function bump() {
   load();
 }
 // The word flashed on entering a field: LASt on a level, Count at level 0; none for PROFILE and TYPE.
-function wordFor(key) { return key == 'top' ? (cur().level ? 'LASt' : 'Count') : WORDS[key] || ''; }
+// "LASt " keeps the L off main cell 2, whose top and bottom bars share a driver (an L there reads as C).
+function wordFor(key) { return key == 'top' ? (cur().level ? 'LASt ' : 'Count') : WORDS[key] || ''; }
 // L in EDIT steps PROFILE -> TYPE -> LASt -> LEUEL -> SEtS -> PACE -> LEn -> idle; hold profiles skip PACE.
 function nextField() {
   var f = field + 1;

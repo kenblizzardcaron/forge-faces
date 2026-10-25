@@ -14,11 +14,11 @@ test('offer after finish', () => {
   const w = fresh();
   w.tap('A');
   w.at(600000);
-  assert.equal(w.main(), '  donE');
+  assert.equal(w.main(), ' donE ');
   w.advance(10000);
   assert.equal(w.ctx.state, 4);
   assert.equal(w.day(), '  ');
-  assert.equal(w.main(), 'UP  20');
+  assert.equal(w.main(), ' 20 UP');
   w.tap('A');
   assert.equal(w.ctx.state, 0);
   assert.equal(w.ctx.cur().level, 20);
@@ -41,7 +41,7 @@ test('hush', () => {
   w.at(601100);
   w.tap('A');
   assert.equal(w.ctx.cur().level, 19);
-  assert.equal(w.main(), 'UP  20');
+  assert.equal(w.main(), ' 20 UP');
   w.tap('A');
   assert.equal(w.ctx.cur().level, 20);
 });
@@ -73,7 +73,7 @@ test('offer to max', () => {
   w.ctx.setLevel(117);
   w.tap('A');
   w.at(325000);
-  assert.equal(w.main(), 'UP 118');
+  assert.equal(w.main(), '118 UP');
   w.tap('A');
   assert.equal(w.main(), '  GOAL');
   w.advance(2999);
@@ -92,7 +92,7 @@ test('offer off screen', () => {
   w.minute();
   w.advance(10000);
   w.setActive(true);
-  assert.equal(w.main(), 'UP  20');
+  assert.equal(w.main(), ' 20 UP');
   w.tap('A');
   assert.equal(w.ctx.cur().level, 20);
 });

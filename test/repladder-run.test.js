@@ -19,7 +19,7 @@ test('intro', () => {
   assert.equal(w.main(), '100013');
   const p = loadClassic();
   p.tap('A');
-  assert.equal(p.main(), 'rEP 51');
+  assert.equal(p.main(), '51 rEP');
 });
 
 test('no intro while running', () => {
@@ -62,7 +62,7 @@ test('invalid idle and start', () => {
 test('lead-in', () => {
   const w = fresh();
   w.tap('A');
-  assert.equal(w.main(), 'rEP100');
+  assert.equal(w.main(), '100rEP');
   assert.equal(w.day(), ' 5');
   assert.equal(w.colon, false);
   w.advance(1000);
@@ -70,10 +70,10 @@ test('lead-in', () => {
   assert.equal(w.day(), ' 4');
   assert.equal(w.colon, true);
   w.advance(1000);
-  assert.equal(w.main(), 'SEtS 5');
+  assert.equal(w.main(), '5 SEtS');
   assert.equal(w.day(), ' 3');
   w.advance(1000);
-  assert.equal(w.main(), 'PACE 3');
+  assert.equal(w.main(), ' 3 SEC');
   assert.equal(w.day(), ' 2');
   w.advance(1000);
   assert.equal(w.main(), 'GO  22');
@@ -86,7 +86,7 @@ test('lead-in on a level', () => {
   w.advance(1000);
   w.ctx.setLevel(45);
   w.tap('A');
-  assert.equal(w.main(), 'rEP100');
+  assert.equal(w.main(), '100rEP');
   assert.equal(w.day(), ' 5');
   assert.equal(w.colon, false);
   w.advance(1000);
@@ -94,10 +94,10 @@ test('lead-in on a level', () => {
   assert.equal(w.day(), ' 4');
   assert.strictEqual(w.colon, true);
   w.advance(1000);
-  assert.equal(w.main(), 'SEtS 5');
+  assert.equal(w.main(), '5 SEtS');
   assert.equal(w.day(), ' 3');
   w.advance(1000);
-  assert.equal(w.main(), 'LEU 45');
+  assert.equal(w.main(), '45 LEU');
   assert.equal(w.day(), ' 2');
   w.advance(1000);
   assert.equal(w.main(), 'GO  22');
@@ -155,7 +155,7 @@ test('done', () => {
   const w = fresh();
   w.tap('A');
   w.at(600000);
-  assert.equal(w.main(), '  donE');
+  assert.equal(w.main(), ' donE ');
   assert.equal(w.day(), '  ');
   assert.equal(w.colon, false);
   w.tap('A');
@@ -173,7 +173,7 @@ test('one set of 100', () => {
   assert.equal(w.main(), ' 003  ');
   assert.equal(w.day(), 'S1');
   w.at(300000);
-  assert.equal(w.main(), '  donE');
+  assert.equal(w.main(), ' donE ');
 });
 
 test('fractional rest', () => {
@@ -188,11 +188,11 @@ test('fractional rest', () => {
   assert.equal(w.main(), ' 11801');
   for (let ms = 0; ms <= 601000; ms += 250) {
     w.at(ms);
-    if (w.main() === '  donE') {
+    if (w.main() === ' donE ') {
       assert.equal(ms, 601000);
       break;
     }
     assert.match(w.main(), /^[ \d]{6}$/);
   }
-  assert.equal(w.main(), '  donE');
+  assert.equal(w.main(), ' donE ');
 });

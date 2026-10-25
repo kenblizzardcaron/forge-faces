@@ -35,7 +35,7 @@ test('walk the fields on a level', () => {
   w.tap('L');
   assert.equal(w.main(), '  rEPS');
   w.tap('L');
-  assert.equal(w.main(), '  LASt');
+  assert.equal(w.main(), ' LASt ');
   w.advance(1000);
   assert.equal(w.main(), '   100');
   assert.equal(w.day(), ' 1');
@@ -44,7 +44,7 @@ test('walk the fields on a level', () => {
   w.tap('L');
   assert.equal(w.main(), '  SEtS');
   w.tap('L');
-  assert.equal(w.main(), '  PACE');
+  assert.equal(w.main(), ' PACE ');
   w.tap('L');
   assert.equal(w.main(), '   LEn');
   w.tap('L');
@@ -57,7 +57,7 @@ test('walk the fields at level 0', () => {
   assert.equal(w.main(), '  PUSH');
   w.tap('L');
   assert.equal(w.main(), '  rEPS');
-  for (const word of [' Count', ' LEUEL', '  SEtS', '  PACE', '   LEn']) {
+  for (const word of [' Count', ' LEUEL', '  SEtS', ' PACE ', '   LEn']) {
     w.tap('L');
     assert.equal(w.main(), word);
   }
@@ -121,7 +121,7 @@ test('hold skips PACE', () => {
   assert.equal(w.main(), ' PLAnK');
   w.tap('L');
   assert.equal(w.main(), '  HOLd');
-  for (const word of ['  LASt', ' LEUEL', '  SEtS', '   LEn']) {
+  for (const word of [' LASt ', ' LEUEL', '  SEtS', '   LEn']) {
     w.tap('L');
     assert.equal(w.main(), word);
   }
@@ -288,7 +288,7 @@ test('no edit while running', () => {
 test('leaving edit stops a held repeat', () => {
   const w = fresh();
   for (let i = 0; i < 6; i++) w.tap('L');
-  assert.equal(w.main(), '  PACE');
+  assert.equal(w.main(), ' PACE ');
   w.advance(1000);
   // Start a hold on A without releasing it, as a long press would.
   w.ctx.button(0, 0);
