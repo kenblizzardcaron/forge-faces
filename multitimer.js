@@ -1,6 +1,6 @@
 // Multi-timer: three concurrent countdown timers on one face.
 // Readable source is over the 8158-byte limit: upload the built multitimer.min.js.
-// Build it: node tools/build-face.js examples/multitimer.js examples
+// Build it: node build.js
 const subscribe = E_BUTTONS + E_A_LONG + E_L_LONG;
 var STOCK = 0, PING = 1, COUNTDOWN = 2;
 var settings = { beepStyle: 0 };  // local.json bakes these in; Bluetooth S0-S2 still changes the style

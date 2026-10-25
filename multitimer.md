@@ -10,7 +10,7 @@ A feature-parity replacement for the official Ollee TIMER face that adds **simul
 
 ## Beep styles
 
-Three ways to beep, chosen over Bluetooth (see [below](#bluetooth-messages)); the face starts on **stock**:
+Three ways to beep, baked in with [local.json](#localjson) or chosen over Bluetooth (see [below](#bluetooth-messages)); the face starts on **stock**:
 
 | Style | Interval change | Timer end / end of interval set |
 | --- | --- | --- |
