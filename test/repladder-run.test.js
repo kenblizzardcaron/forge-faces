@@ -1,13 +1,13 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { loadFace } = require('../tools/harness');
+const { manual } = require('./repladder-helpers');
 
 // Fresh face past its 1 s intro; at(ms) advances the fake clock until elapsed() equals ms.
 function fresh() {
   const w = loadFace('repladder.js');
   w.advance(1000);
-  w.ctx.settings = { level: 0, total: 100, length: 600, sets: 5, pace: 3 };
-  w.ctx.draw();
+  manual(w, { top: 100, base: 600, sets: 5, pace: 3 });
   w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
   return w;
 }
@@ -17,10 +17,10 @@ test('intro', () => {
   assert.equal(w.main(), 'LAddEr');
   assert.equal(w.colon, false);
   w.advance(1000);
-  assert.equal(w.main(), '100012');
+  assert.equal(w.main(), '100013');
   const p = loadFace('repladder.js');
   p.tap('A');
-  assert.equal(p.main(), 'rEP 50');
+  assert.equal(p.main(), 'rEP 51');
 });
 
 test('no intro while running', () => {
@@ -44,15 +44,13 @@ test('idle on the ladder', () => {
   const w = loadFace('repladder.js');
   w.advance(1000);
   assert.equal(w.day(), 'S1');
-  assert.equal(w.main(), '100012');
+  assert.equal(w.main(), '100013');
   assert.equal(w.colon, true);
 });
 
 test('invalid idle and start', () => {
   const w = fresh();
-  w.ctx.settings.total = 5;
-  w.ctx.settings.sets = 9;
-  w.ctx.draw();
+  manual(w, { top: 5, base: 600, sets: 9, pace: 3 });
   assert.equal(w.day(), 'Er');
   assert.equal(w.main(), '1000  ');
   w.tap('A');
@@ -89,11 +87,11 @@ test('lead-in on a level', () => {
   w.advance(1000);
   w.ctx.setLevel(45);
   w.tap('A');
-  assert.equal(w.main(), 'rEP 90');
+  assert.equal(w.main(), 'rEP100');
   assert.equal(w.day(), ' 5');
   assert.equal(w.colon, false);
   w.advance(1000);
-  assert.equal(w.main(), '1000  ');
+  assert.equal(w.main(), ' 945  ');
   assert.equal(w.day(), ' 4');
   assert.strictEqual(w.colon, true);
   w.advance(1000);
@@ -103,7 +101,7 @@ test('lead-in on a level', () => {
   assert.equal(w.main(), 'LEU 45');
   assert.equal(w.day(), ' 2');
   w.advance(1000);
-  assert.equal(w.main(), 'GO  20');
+  assert.equal(w.main(), 'GO  22');
   assert.equal(w.day(), ' 1');
   assert.equal(w.colon, false);
 });
@@ -111,7 +109,7 @@ test('lead-in on a level', () => {
 test('lead-in GO with one set of 100', () => {
   const w = loadFace('repladder.js');
   w.advance(1000);
-  w.ctx.setLevel(100);
+  w.ctx.setLevel(118);
   w.tap('A');
   w.advance(4000);
   assert.equal(w.main(), 'GO 100');
@@ -167,8 +165,7 @@ test('done', () => {
 
 test('one set of 100', () => {
   const w = fresh();
-  w.ctx.settings = { level: 0, total: 100, length: 600, sets: 1, pace: 3 };
-  w.ctx.draw();
+  manual(w, { top: 100, base: 600, sets: 1, pace: 3 });
   assert.equal(w.main(), '1000  ');
   w.tap('A');
   w.at(0);
@@ -182,8 +179,7 @@ test('one set of 100', () => {
 
 test('fractional rest', () => {
   const w = fresh();
-  w.ctx.settings = { level: 0, total: 100, length: 601, sets: 4, pace: 3 };
-  w.ctx.draw();
+  manual(w, { top: 100, base: 601, sets: 4, pace: 3 });
   w.tap('A');
   w.at(181332);
   assert.equal(w.day(), 'r1');

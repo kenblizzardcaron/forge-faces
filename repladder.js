@@ -1,15 +1,19 @@
 // Rep Ladder: a set-by-set rep ladder timer with a work/rest session plan.
 // Upload repladder.min.js, the built copy of this file.
 const subscribe = E_BUTTONS + E_A_LONG;
-var settings = { level: 25, base: 600, total: 50, length: 600, sets: 5, pace: 3 };
+var settings = { profile: 0 };
+var profiles = [{ name: 'PUSH', hold: 0, sets: 5, top: 100, pace: 3, base: 600, level: 19 }, { name: 'PULL', hold: 0, sets: 5, top: 50, pace: 3, base: 360, level: 1 }, { name: 'PLAnK', hold: 1, sets: 5, top: 300, pace: 3, base: 600, level: 1 }];
+// The session the face runs and draws; load() derives it from the active profile.
+var session = null;
 
 var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3, OFFER = 4;
 var state = IDLE, startAt = 0, paused = false, pausedAt = 0, current = null, lastPhase = -1, message = '', messageUntil = 0;
 var displayTimer = -1, longFired = 0, hush = 0;
 // Edit: L cycles fields; A steps the current one, and holding A repeats every 100 ms on its own slot.
-var FIELDS = ['level', 'total', 'length', 'sets', 'pace'];
+var FIELDS = ['level', 'top', 'base', 'sets', 'pace'];
 var WORDS = ['LEUEL', 'Count', 'LEn', 'SEtS', 'PACE'];
-var LIMITS = [[0, 100, 1], [1, 999, 1], [15, 5985, 15], [1, 9, 1], [1, 20, 1]];
+// Level's max comes from the profile, so its limit is unused.
+var LIMITS = [[0, 0, 1], [1, 999, 1], [15, 5985, 15], [1, 9, 1], [1, 20, 1]];
 var field = 0, repeatTimer = -1;
 // Finish ring: stock triple, 125 ms steps, beeping on steps 0-2 of each 8; own timer slot.
 var RING_STEP_MS = 125, ringTimer = -1, ringStepNo = 0, ringSteps = 0, cue = 6;
@@ -27,11 +31,14 @@ function flash(word, ms) { message = word; messageUntil = now() + (ms || 1000); 
 function secondStep(msLeft) { return msLeft - 1000 * (Math.ceil(msLeft / 1000) - 1); }
 function earliest(d, x) { return d && d < x ? d : x; }
 
-// One beep per work/rest change; the last phase end rings the finish and sets OFFER below level 100, else DONE.
+// The active profile, picked by settings.profile.
+function cur() { return profiles[settings.profile]; }
+
+// One beep per work/rest change; the last phase end rings the finish and sets OFFER below the max level, else DONE.
 function onPhase(i) {
   lastPhase = i;
   if (i == current.ends.length) {
-    state = settings.level > 0 && settings.level < 100 ? OFFER : DONE;
+    state = cur().level > 0 && cur().level < maxLevel(cur()) ? OFFER : DONE;
     startRing(Ollee.active()); updateSubscriptions(); return;
   }
   Ollee.beep();
@@ -68,7 +75,7 @@ function stopRing() {
 
 // Idle main text: total time, then set 1's reps; blank reps when the plan is invalid.
 function preview(s) {
-  var p = plan(s.total, s.length, s.sets, s.pace);
+  var p = plan(s.total, s.length, s.sets, s.pace, s.hold);
   return fmtTime(s.length) + (p ? fmtReps(p.reps[0]) : '  ');
 }
 
@@ -77,31 +84,31 @@ function draw() {
   sync();
   var day = '  ', main = ' donE', colon = false, lap = false;
   if (state == IDLE) {
-    var p = plan(settings.total, settings.length, settings.sets, settings.pace);
+    var p = plan(session.total, session.length, session.sets, session.pace, session.hold);
     day = p ? 'S1' : 'Er';
-    main = preview(settings);
+    main = preview(session);
     colon = true;
   } else if (state == EDIT) {
-    var q = plan(settings.total, settings.length, settings.sets, settings.pace), v = settings[FIELDS[field]];
+    var q = plan(session.total, session.length, session.sets, session.pace, session.hold), v = cur()[FIELDS[field]];
     if (field == 0) {
       // The first day digit only shows 1-3, so a level's set 1 reps show here only when under 40.
-      var r = v ? rung(v, settings.base) : null, lr = r ? plan(r.total, r.length, r.sets, r.pace) : null;
+      var r = v ? rungAt(cur(), v) : null, lr = r ? plan(r.total, r.length, r.sets, r.pace, r.hold) : null;
       day = lr && lr.reps[0] < 40 ? String(lr.reps[0]) : '  ';
       main = v ? String(v) : 'oFF';
     } else {
       day = q ? fmtReps(q.reps[0]) : 'Er';
-      main = field == 2 ? fmtTime(settings.level ? settings.base : settings.length) + '  ' : ('      ' + v).slice(-6);
+      main = field == 2 ? fmtTime(cur().base) + '  ' : ('      ' + v).slice(-6);
       colon = field == 2;
     }
   } else if (state == OFFER && ringTimer == -1) {
     day = '  ';
-    main = 'UP' + ('    ' + (settings.level + 1)).slice(-4);
+    main = 'UP' + ('    ' + (cur().level + 1)).slice(-4);
     colon = false;
   } else if (state == RUNNING && elapsed() < 0) {
     // Countdown on the day digits; the main digits spell out the session, one item per second, then GO with set 1's reps.
-    var s = Math.ceil(-elapsed() / 1000), lv = settings.level;
-    var items = ['rEP' + pad3(settings.total), fmtTime(settings.length) + '  ', 'SEtS ' + settings.sets,
-      lv ? 'LEU' + pad3(lv) : 'PACE' + ('  ' + settings.pace).slice(-2), 'GO' + ('    ' + current.reps[0]).slice(-4)];
+    var s = Math.ceil(-elapsed() / 1000), lv = cur().level;
+    var items = ['rEP' + pad3(session.total), fmtTime(session.length) + '  ', 'SEtS ' + session.sets,
+      lv ? 'LEU' + pad3(lv) : 'PACE' + ('  ' + session.pace).slice(-2), 'GO' + ('    ' + current.reps[0]).slice(-4)];
     var k = Math.max(0, Math.min(4, 5 - s));
     day = ' ' + Math.min(s, 5);
     main = items[k];
@@ -110,8 +117,8 @@ function draw() {
     var i = phaseAt(current, elapsed()), left = Math.ceil((current.ends[i] - elapsed()) / 1000);
     colon = true;
     if (i % 2 == 0) {
-      // Work counts reps up, one per pace (settings only change in idle); each change lands on a countdown second.
-      var rep = Math.floor((elapsed() - (i ? current.ends[i - 1] : 0)) / (settings.pace * 1000)) + 1;
+      // Work counts reps up, one per pace (the session only changes in idle); each change lands on a countdown second.
+      var rep = Math.floor((elapsed() - (i ? current.ends[i - 1] : 0)) / (session.pace * 1000)) + 1;
       day = 'S' + (i / 2 + 1);
       main = fmtTime(left) + fmtReps(Math.min(rep, current.reps[i / 2]));
     } else {
@@ -146,7 +153,7 @@ function schedule() {
 function redraw() { displayTimer = -1; draw(); }
 
 function start() {
-  var p = plan(settings.total, settings.length, settings.sets, settings.pace);
+  var p = plan(session.total, session.length, session.sets, session.pace, session.hold);
   if (!p) { flash('Error'); return; }
   current = p; state = RUNNING; startAt = now() + 5000; paused = false; lastPhase = -1; cue = 6;
 }
@@ -172,27 +179,21 @@ function updateSubscriptions() {
 }
 function clock_minute() { catchUp(); draw(); }
 
-// Sets the ladder level; a rung copies its plan into the manual fields. Level 0 keeps them.
-function setLevel(n) {
-  settings.level = n;
-  var r = rung(n, settings.base);
-  if (r) { settings.total = r.total; settings.length = r.length; settings.sets = r.sets; settings.pace = r.pace; }
-}
-// Steps the current field by its increment, wrapping to the minimum past the maximum; levels 1-9 become 10.
+// Sets the active profile's level and derives the session from it.
+function setLevel(n) { cur().level = n; load(); }
+// Steps the current field on the active profile, wrapping to the minimum past the maximum, then reloads the session.
 function bump() {
-  var lim = LIMITS[field], onLevel = field == 2 && settings.level > 0, key = onLevel ? 'base' : FIELDS[field];
-  var v = settings[key] + lim[2];
-  if (v > lim[1]) v = lim[0];
-  if (field == 0 && v > 0 && v < 10) v = 10;
-  if (field == 0) setLevel(v);
-  else if (onLevel) { settings.base = v; setLevel(settings.level); }
-  else settings[key] = v;
+  var p = cur(), key = FIELDS[field], lim = LIMITS[field];
+  var v = p[key] + lim[2];
+  if (v > (field == 0 ? maxLevel(p) : lim[1])) v = lim[0];
+  p[key] = v;
+  load();
 }
 // L in EDIT: on a level, Level -> LEn -> idle; at level 0, Level -> Count -> LEn -> SEtS -> PACE -> idle.
 function nextField() {
   var f = field + 1;
-  if (field == 0 && settings.level) f = 2;
-  if (field == 2 && settings.level) f = FIELDS.length;
+  if (field == 0 && cur().level) f = 2;
+  if (field == 2 && cur().level) f = FIELDS.length;
   if (f == FIELDS.length) { field = 0; state = IDLE; }
   else { field = f; flash(WORDS[f]); }
 }
@@ -231,9 +232,9 @@ function button(b, e) {
     else if (state == RUNNING && b == B_A) { if (paused) resume(); else pause(); }
     else if (state == RUNNING && paused && b == B_L) reset();
     else if (state == OFFER && b == B_A) {
-      setLevel(settings.level + 1);
+      setLevel(cur().level + 1);
       state = IDLE;
-      if (settings.level == 100) flash('GOAL', 3000);
+      if (cur().level == maxLevel(cur())) flash('GOAL', 3000);
     }
     else if (state == OFFER && b == B_L) state = IDLE;
   }
@@ -304,24 +305,17 @@ function eachRung(p, emit) {
   }
   emit(T, T * P, 1);
 }
-// Set-drop levels; each phase trims LEn 15 s per level from base (5 sets continue on from level 50).
-var PHASES = [50, 60, 70, 80];
-// 10-50: Count = level x 2. Above 50: Count 100, one set fewer per phase. 100: one set of 100.
-function rung(level, base) {
-  if (level < 10 || level > 100) return null;
-  if (base == null) base = 600;
-  if (level <= 50) return { total: 2 * level, length: base, sets: 5, pace: 3 };
-  if (level === 100) return { total: 100, length: 300, sets: 1, pace: 3 };
-  var k = 0;
-  for (var i = 0; i < PHASES.length; i++) if (PHASES[i] <= level) k = i;
-  return { total: 100, length: base - 15 * (level - PHASES[k]), sets: 5 - k, pace: 3 };
-}
-
 // Index of the phase running at ms (first end after ms); ends.length once the session is over.
 function phaseAt(p, ms) {
   for (var i = 0; i < p.ends.length; i++) if (p.ends[i] > ms) return i;
   return p.ends.length;
 }
 
-// The default level's rung fills Count, LEn, SEtS and PACE, so a local level override needs nothing else.
-setLevel(settings.level);
+// Level 0 takes the profile's manual fields; a level takes its rung. Clamps the level first.
+function load() {
+  var p = cur();
+  if (p.level > maxLevel(p)) p.level = maxLevel(p);
+  if (p.level > 0) session = rungAt(p, p.level);
+  else session = { total: p.top, length: p.base, sets: p.sets, pace: p.hold ? 1 : p.pace, hold: p.hold };
+}
+load();

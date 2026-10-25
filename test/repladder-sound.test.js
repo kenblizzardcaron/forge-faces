@@ -1,12 +1,12 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { loadFace } = require('../tools/harness');
+const { manual } = require('./repladder-helpers');
 
 // Fresh face; at(ms) advances the fake clock until elapsed() equals ms.
 function fresh() {
   const w = loadFace('repladder.js');
-  w.ctx.settings = { level: 0, total: 100, length: 600, sets: 5, pace: 3 };
-  w.ctx.draw();
+  manual(w, { top: 100, base: 600, sets: 5, pace: 3 });
   w.at = (ms) => w.advance(w.ctx.startAt + ms - w.ctx.now());
   return w;
 }
@@ -70,8 +70,7 @@ test('button stops ring', () => {
 
 test('zero rest beeps once', () => {
   const w = fresh();
-  w.ctx.settings = { level: 0, total: 100, length: 300, sets: 5, pace: 3 };
-  w.ctx.draw();
+  manual(w, { top: 100, base: 300, sets: 5, pace: 3 });
   w.tap('A');
   w.at(66000);
   assert.equal(kinds(w, 'beep').length, 2);
