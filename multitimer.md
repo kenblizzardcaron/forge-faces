@@ -5,7 +5,7 @@
 A feature-parity replacement for the official Ollee TIMER face that adds **simultaneous timers**: up to three countdowns run at once, each with the full TIMER feature set.
 
 - **Same as the official face:** edit to 23:59:59, start / pause / clear, 10 presets, interval mode, fast mode, and the same buttons for each.
-- **Added:** three independent timers (number shown on the day digits), switched with **A + L**; the face opens on whichever timer finishes next; presets can be saved from the watch.
+- **Added:** three independent timers (number shown on the day digits), switched with **A + L**; the face opens on whichever timer finishes next; presets can be saved from the watch, and the presets and beep style can be baked in with `local.json`.
 - **Different:** **LAP** stands in for the blinking bell, which Forge faces can't control; the weekday digits show the Forge slot name (`FA`–`FC`) instead of `TI`.
 
 ## Beep styles
@@ -61,3 +61,12 @@ Write to the Forge RX characteristic (`C6FB0002-A37D-40AC-89BE-887D25E1F5B3`). T
 | 5–44 | 10 presets, each a little-endian uint32 of seconds (clamped to 23:59:59) |
 
 Bytes 1–44 match the official Ollee app's `02 26` timer payload. Send it as three writes, each prefixed with a sequence byte: `[0] + bytes 0–18`, `[1] + bytes 19–37`, `[2] + bytes 38–44`. A write out of order discards the partial message.
+
+## local.json
+
+Bake your own presets and beep style into a personal build with a `local.json` (gitignored), e.g. `{"multitimer": {"beepStyle": 2, "presets": [60, 180, 300, 600, 900, 1500, 1800, 2700, 3600, 0]}}`. `node build.js` then also writes `multitimer-local.min.js` (gitignored) to upload instead.
+
+- `beepStyle`: `0`–`2` (stock, ping, countdown); any other value loads as stock.
+- `presets`: 10 whole seconds, each from `0` to `86399` (23:59:59).
+- A zero preset ends interval mode: the sequence stops before it, and a zero in slot 1 means interval mode never starts.
+- Bluetooth `S0`–`S2` still changes the beep style at runtime.

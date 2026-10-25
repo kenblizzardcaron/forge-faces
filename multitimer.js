@@ -3,7 +3,8 @@
 // Build it: node tools/build-face.js examples/multitimer.js examples
 const subscribe = E_BUTTONS + E_A_LONG + E_L_LONG;
 var STOCK = 0, PING = 1, COUNTDOWN = 2;
-var beepStyle = STOCK;  // set over Bluetooth: text S0, S1 or S2
+var settings = { beepStyle: 0 };  // local.json bakes these in; Bluetooth S0-S2 still changes the style
+var beepStyle = settings.beepStyle >= STOCK && settings.beepStyle <= COUNTDOWN ? settings.beepStyle : STOCK;
 var SETTINGS_MESSAGE = 0x53;
 var IDLE = 0, RUNNING = 1, PAUSED = 2, RUNG = 3, ARMED = 4;
 var NORMAL = 0, FAST = 1, INTERVAL = 2;

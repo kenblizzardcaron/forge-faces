@@ -24,7 +24,7 @@ Each face comes as readable source (`name.js`) and a minified build (`name.min.j
 
 To rebuild both faces after editing their source: `npm install terser@5 && node build.js`; run the tests with `node --test`. Top-level names are shortened; the hook names the watch calls and `subscribe` are kept.
 
-To bake your own defaults into a personal build, put them in a `local.json` (gitignored), e.g. `{"repladder": {"profiles": [{"name": "PUSH", "level": 39}]}}` (see [repladder.md](repladder.md#localjson)); `node build.js` then also writes `repladder-local.min.js` (gitignored) to upload instead, plus `repladder-local.js` so a local emulator opens it with `?face=repladder-local`. Keys are the names in the face's `var settings` line (plus `profiles` for repladder), and a misspelled key fails the build.
+To bake your own defaults into a personal build, put them in a `local.json` (gitignored), e.g. `{"repladder": {"profiles": [{"name": "PUSH", "level": 39}]}}` (see [repladder.md](repladder.md#localjson)); `node build.js` then also writes `repladder-local.min.js` (gitignored) to upload instead, plus `repladder-local.js` so a local emulator opens it with `?face=repladder-local`. Keys are the names in the face's `var settings` line (plus `profiles` for repladder and `presets` for multitimer), and a misspelled key fails the build.
 
 ## Hosted emulator
 

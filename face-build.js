@@ -25,13 +25,19 @@
     });
   }
 
-  // Swaps each setting into the face's `var settings = { ... };`; `profiles` replaces its list.
+  // Swaps each setting into the face's `var settings = { ... };`; `profiles` and `presets` replace their lists.
   // The boot `profile` index must land in the resulting list, or the face's cur() is undefined.
   function localize(src, name, overrides) {
-    const { profiles, ...settings } = overrides;
+    const { profiles, presets, ...settings } = overrides;
     const re = /var profiles = \[[\s\S]*?\];/;
     if (profiles !== undefined && (!Array.isArray(profiles) || profiles.length === 0)) {
       throw new Error(`local.json: ${name} profiles must be a non-empty list`);
+    }
+    if (presets !== undefined) {
+      const ok = Array.isArray(presets) && presets.length === 10 &&
+        presets.every((p) => Number.isInteger(p) && p >= 0 && p <= 86399);
+      if (!ok) throw new Error(`local.json: ${name} presets must be 10 whole seconds from 0 to 86399`);
+      if (!/var presets = \[[^\]]*\];/.test(src)) throw new Error(`local.json: ${name} has no presets list`);
     }
     let out = src.replace(/var settings = \{[^}]*\}/, (literal) => {
       for (const [key, value] of Object.entries(settings)) {
@@ -41,6 +47,7 @@
       }
       return literal;
     });
+    if (presets !== undefined) out = out.replace(/var presets = \[[^\]]*\];/, () => `var presets = ${JSON.stringify(presets)};`);
     const hasList = re.test(src);
     let count = 0;
     if (profiles) {

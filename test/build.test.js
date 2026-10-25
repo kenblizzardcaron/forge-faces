@@ -47,3 +47,24 @@ test('faces without profiles skip the check', () => {
 test('old level key fails', () => {
   assert.throws(() => localize(src, 'repladder', { level: 45 }), /has no setting "level"/);
 });
+
+const mt = fs.readFileSync(path.join(__dirname, '..', 'multitimer.js'), 'utf8');
+
+test('presets replace the list', () => {
+  const out = localize(mt, 'multitimer', { presets: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] });
+  assert.deepEqual([...loadSource(out).ctx.presets], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+});
+
+test('bad presets fail', () => {
+  for (const p of [[1, 2, 3, 4, 5, 6, 7, 8, 9], Array(10).fill(86400), Array(10).fill(1.5), Array(10).fill(-1), 'x']) {
+    assert.throws(() => localize(mt, 'multitimer', { presets: p }), /multitimer presets must be 10 whole seconds from 0 to 86399/);
+  }
+});
+
+test('faces without presets reject them', () => {
+  assert.throws(() => localize(src, 'repladder', { presets: Array(10).fill(60) }), /repladder has no presets list/);
+});
+
+test('beepStyle bakes in', () => {
+  assert.equal(loadSource(localize(mt, 'multitimer', { beepStyle: 2 })).ctx.beepStyle, 2);
+});
