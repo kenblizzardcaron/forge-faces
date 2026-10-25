@@ -195,16 +195,19 @@ function topRange(p) {
 }
 // Steps the current field on the active profile, wrapping to its minimum; then clamps top and reloads.
 function bump() {
-  var p = cur(), key = FIELDS[field];
+  var p = cur(), key = FIELDS[field], lim = null;
   if (key == 'profile') settings.profile = (settings.profile + 1) % profiles.length;
-  else if (key == 'level') p.level = p.level < maxLevel(p) ? p.level + 1 : 0;
   else {
-    var lim = key == 'top' ? topRange(p) : LIMITS[key], v = p[key] + lim[2];
-    p[key] = v > lim[1] ? lim[0] : v;
+    if (key == 'level') p.level = p.level < maxLevel(p) ? p.level + 1 : 0;
+    else {
+      lim = key == 'top' ? topRange(p) : LIMITS[key];
+      var v = p[key] + lim[2];
+      p[key] = v > lim[1] ? lim[0] : v;
+    }
     var t = topRange(p);
     p.top = Math.min(t[1], Math.max(t[0], p.top));
-    // A bump that makes the ladder too long to fit in 999 levels wraps back to its minimum.
-    if (maxLevel(p) > 999) p[key] = lim[0];
+    // On a level, a bump that makes the ladder too long to fit in 999 levels wraps back to its minimum.
+    if (lim && p.level > 0 && maxLevel(p) > 999) p[key] = lim[0];
   }
   load();
 }

@@ -101,6 +101,30 @@ test('top clamps to the ladder start', () => {
   assert.equal(w.ctx.cur().top, 21);
 });
 
+test('level from manual clamps top', () => {
+  const w = fresh();
+  manual(w, { top: 5, base: 600, sets: 5, pace: 3 });
+  w.tap('L');
+  w.tap('L');
+  w.tap('A');
+  assert.equal(w.ctx.cur().level, 1);
+  assert.equal(w.ctx.cur().top, 15);
+  const s = w.ctx.session;
+  assert.notEqual(w.ctx.plan(s.total, s.length, s.sets, s.pace, s.hold), null);
+});
+
+test('manual ignores the level cap', () => {
+  const w = ladder();
+  w.tap('L');
+  w.tap('A');
+  w.tap('A');
+  manual(w, { top: 1005, base: 1200, sets: 1, pace: 3, hold: 1 });
+  w.tap('L');
+  w.tap('L');
+  w.tap('A');
+  assert.equal(w.ctx.cur().top, 1010);
+});
+
 test('editing clamps the level', () => {
   const w = ladder();
   w.ctx.setLevel(118);
