@@ -28,6 +28,17 @@ test('nameless profile fails', () => {
   assert.throws(() => localize(src, 'repladder', { profiles: [{ top: 5 }] }), /profiles\[0\] needs a name/);
 });
 
+test('profile out of range fails', () => {
+  assert.throws(() => localize(src, 'repladder', { profile: 5 }), /repladder profile 5 is out of range \(0\.\.2\)/);
+  assert.throws(() => localize(src, 'repladder', { profile: 2, profiles: [{ name: 'A' }] }),
+    /repladder profile 2 is out of range \(0\.\.0\)/);
+});
+
+test('profiles must be a list', () => {
+  assert.throws(() => localize(src, 'repladder', { profiles: {} }), /repladder profiles must be a non-empty list/);
+  assert.throws(() => localize(src, 'repladder', { profiles: [] }), /repladder profiles must be a non-empty list/);
+});
+
 test('old level key fails', () => {
   assert.throws(() => localize(src, 'repladder', { level: 45 }), /has no setting "level"/);
 });

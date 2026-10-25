@@ -14,32 +14,45 @@ const LOCAL = fs.existsSync('local.json') ? JSON.parse(fs.readFileSync('local.js
 const PROFILE_DEFAULTS = { hold: 0, sets: 5, top: 100, pace: 3, base: 600, level: 1 };
 
 // Fills each local.json profile with the defaults; a missing name or unknown key throws.
-function fillProfiles(profiles) {
+function fillProfiles(name, profiles) {
   return profiles.map((p, i) => {
-    if (!p.name) throw new Error(`local.json: repladder profiles[${i}] needs a name`);
+    if (!p.name) throw new Error(`local.json: ${name} profiles[${i}] needs a name`);
     for (const key of Object.keys(p)) {
-      if (key !== 'name' && !Object.hasOwn(PROFILE_DEFAULTS, key)) throw new Error(`local.json: repladder profiles[${i}] has no setting "${key}"`);
+      if (key !== 'name' && !Object.hasOwn(PROFILE_DEFAULTS, key)) throw new Error(`local.json: ${name} profiles[${i}] has no setting "${key}"`);
     }
     return { name: p.name, ...PROFILE_DEFAULTS, ...p };
   });
 }
 
 // Swaps each setting into the face's `var settings = { ... };`; `profiles` replaces its list.
+// The boot `profile` index must land in the resulting list, or the face's cur() is undefined.
 function localize(src, name, overrides) {
   const { profiles, ...settings } = overrides;
+  const re = /var profiles = \[[\s\S]*?\];/;
+  if (profiles !== undefined && (!Array.isArray(profiles) || profiles.length === 0)) {
+    throw new Error(`local.json: ${name} profiles must be a non-empty list`);
+  }
   let out = src.replace(/var settings = \{[^}]*\}/, (literal) => {
     for (const [key, value] of Object.entries(settings)) {
-      const re = new RegExp(`\\b${key}: [^,}]+`);
-      if (!re.test(literal)) throw new Error(`local.json: ${name} has no setting "${key}"`);
-      literal = literal.replace(re, `${key}: ${JSON.stringify(value)}`);
+      const keyRe = new RegExp(`\\b${key}: [^,}]+`);
+      if (!keyRe.test(literal)) throw new Error(`local.json: ${name} has no setting "${key}"`);
+      literal = literal.replace(keyRe, `${key}: ${JSON.stringify(value)}`);
     }
     return literal;
   });
+  let count;
   if (profiles) {
-    const re = /var profiles = \[[\s\S]*?\];/;
     if (!re.test(out)) throw new Error(`local.json: ${name} has no profiles list`);
-    const list = JSON.stringify(fillProfiles(profiles));
+    const list = JSON.stringify(fillProfiles(name, profiles));
     out = out.replace(re, () => `var profiles = ${list};`);
+    count = profiles.length;
+  } else {
+    count = (src.match(re)?.[0].match(/\bname:/g) || []).length;
+  }
+  const picked = out.match(/var settings = \{[^}]*\}/)[0].match(/\bprofile: ([^,}]+)/);
+  const index = picked ? JSON.parse(picked[1]) : 0;
+  if (!Number.isInteger(index) || index < 0 || index >= count) {
+    throw new Error(`local.json: ${name} profile ${index} is out of range (0..${count - 1})`);
   }
   return out;
 }
