@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const { minify } = require('terser');
 const { MAX_BYTES, TERSER_OPTIONS, localize } = require('./face-build');
 
-const FACES = ['multitimer', 'repladder'];
+const FACES = ['multitimer', 'repladder', 'fastzone'];
 
 const LOCAL = fs.existsSync('local.json') ? JSON.parse(fs.readFileSync('local.json', 'utf8')) : {};
 
