@@ -29,7 +29,7 @@ The zone number sits on the day digits while you fast. Every time you open the f
 | **L** | Stats, one page per press, then back to the timer | same |
 | Hold **L** | Settings: goal, then beep | same |
 
-**Setting back (hold A):** the screen shows `-0:00` with **S** (start) or **E** (end) on the day digits. Each **A** goes back 15 more minutes; **L** confirms. It goes back at most 6 hours, never before your last fast ended, and an end never before its start. Ending a fast always goes through this screen, so a stray press can't end it and break your streak.
+**Setting back (hold A):** the screen shows `-0:00` with **S** (start) or **E** (end) on the day digits. Each **A** goes back 15 more minutes; **L** confirms. It goes back at most 6 hours, never before your last fast ended, and an end never before its start. Past the furthest it can go, it wraps to `-0:00`. Ending a fast always goes through this screen, so a stray press can't end it and break your streak. Ending within 15 minutes of the start cancels the fast instead: it isn't recorded and your streak is untouched.
 
 Any button stops the goal beep and does nothing else. Stats, settings and the set-back screen return to the timer after 10 seconds without a press (the set-back screen cancels).
 
@@ -51,7 +51,9 @@ Any button stops the goal beep and does nothing else. Stats, settings and the se
 | Streak | fasts in a row that hit their goal, e.g. `Str 12` |
 | Average | `AUG`, then the average fast over the last 7 days (day digits `A`) |
 | Longest | `tOP`, then your longest fast (day digits `t`) |
-| History | one fast per page, newest first; the day digits count back (1–30), **A** steps older, LAP means it hit its goal |
+| History | one fast per page, newest first, showing its length as `HH:MM`; the day digits count back (1–30), **A** steps older and wraps from the oldest back to the newest, LAP means it hit its goal |
+
+Pages with nothing to show yet read `----`. Week counts today and the 6 calendar days before; Average covers the last 7×24 hours.
 
 A fast hits its goal when it lasts at least the goal in effect when it ends. A miss resets the streak to 0.
 
