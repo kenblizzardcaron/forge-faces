@@ -74,12 +74,28 @@ function avgMs(t) {
 // Screens: TIMER is the live countdown; the others arrive with their tasks.
 var TIMER = 0, PICK = 1, STATS = 2, SET = 3, mode = TIMER;
 var message = '', messageUntil = 0, tickTimer = -1;
+// longFired is a bitmask by button id; lastPress restarts the picker's 10 s idle timer.
+var longFired = 0, lastPress = 0;
+// pickStart 1 starts a fast, 0 ends one; pickBack is the backdate in minutes.
+var pickStart = 1, pickBack = 0;
 
 function flashing() { return now() < messageUntil; }
 function flash(word, ms) { message = word; messageUntil = now() + (ms || 1000); draw(); }
 
+// The picker's max: up to 6 h, in 15 min steps, and no further back than the last fast ended.
+function pickMax() {
+  var t = now(), limit = 360;
+  if (pickStart && lastEnd) limit = (t - lastEnd) / MIN;
+  else if (!pickStart) limit = (t - fastStart) / MIN;
+  return Math.min(360, Math.floor(limit / 15) * 15);
+}
+
 // Redraws every second on screen; a flash ends on the first tick after its time.
-function tick() { draw(); }
+// A picker left idle for 10 s cancels back to the timer.
+function tick() {
+  if (mode != TIMER && now() - lastPress >= 10000) mode = TIMER;
+  draw();
+}
 
 // The screen for the current mode, recomputed from the clock on every draw.
 function draw() {
@@ -102,6 +118,11 @@ function draw() {
       }
     }
   }
+  if (mode == PICK) {
+    main = '-' + Math.floor(pickBack / 60) + pad(pickBack % 60) + '  ';
+    day = pickStart ? ' S' : ' E';
+    colon = true;
+  }
   if (flashing()) { main = message; colon = false; }
   Ollee.drawMain(main);
   Ollee.drawDay(day);
@@ -118,6 +139,32 @@ function enter() {
 }
 // The platform cancels timers when the face leaves the screen.
 function exit() { tickTimer = -1; }
-function button() {}
-function a_long() {}
-function l_long() {}
+// Acts on release, as repladder does; a long press sets its bit so its release does nothing.
+function button(b, e) {
+  lastPress = now();
+  if (e != E_UP) return;
+  if (longFired & (1 << b)) { longFired &= ~(1 << b); return; }
+  if (b == B_A && mode == TIMER) {
+    if (fastStart) flash(ZONE_WORDS[zoneOf(now() - fastStart) - 1], 1500);
+    else startFast(now());
+  } else if (b == B_A && mode == PICK) {
+    pickBack += 15;
+    if (pickBack > pickMax()) pickBack = 0;
+  } else if (b == B_L && mode == PICK) {
+    if (pickStart) startFast(now() - pickBack * MIN);
+    else endFast(now() - pickBack * MIN);
+    mode = TIMER;
+  }
+  draw();
+}
+// Holding A opens the backdate picker: a start when not fasting, an end when fasting.
+function a_long() {
+  longFired |= 1 << B_A;
+  lastPress = now();
+  if (mode != TIMER) return;
+  mode = PICK;
+  pickStart = fastStart ? 0 : 1;
+  pickBack = 0;
+  draw();
+}
+function l_long() { longFired |= 1 << B_L; lastPress = now(); }
