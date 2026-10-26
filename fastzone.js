@@ -73,6 +73,8 @@ function avgMs(t) {
 
 // Screens: TIMER is the live countdown; the others arrive with their tasks.
 var TIMER = 0, PICK = 1, STATS = 2, SET = 3, mode = TIMER;
+// setField is the SET field: 0 goal, 1 beep.
+var setField = 0;
 // page is the STATS screen (0 to 4); histIdx picks a fast on page 4, newest first.
 var page = 0, histIdx = 0;
 var message = '', messageUntil = 0, tickTimer = -1;
@@ -107,6 +109,12 @@ function ringStep() {
 function stopRing() {
   if (ringTimer != -1) Ollee.clearInterval(ringTimer);
   ringTimer = -1;
+}
+// A goal below the time already fasted counts as rung, so lowering it never rings; raising it re-arms.
+function setGoal(g) {
+  settings.goal = g;
+  if (fastStart) rung = now() - fastStart >= g * HOUR ? 1 : 0;
+  updateSubscriptions();
 }
 // Rings once per fast when the goal passes; rung stops the minute tick from ringing it again.
 function checkGoal() {
@@ -170,6 +178,10 @@ function draw() {
       main = entry ? hm(entry.e - entry.s) : '  ----';
     }
   }
+  if (mode == SET) {
+    if (setField == 0) { main = goalMain(settings.goal); colon = settings.goal < 24; day = ' G'; }
+    else { main = ' bEEP '; day = settings.beep ? ' 1' : ' 0'; }
+  }
   if (flashing()) { main = message; colon = false; }
   Ollee.drawMain(main);
   Ollee.drawDay(day);
@@ -224,6 +236,14 @@ function button(b, e) {
     else enterPage(page + 1);
   } else if (b == B_A && mode == STATS && page == 4) {
     histIdx = histIdx + 1 < history.length ? histIdx + 1 : 0;
+  } else if (mode == SET) {
+    if (b == B_A) {
+      if (setField == 0) setGoal(settings.goal < 48 ? settings.goal + 1 : 12);
+      else { settings.beep = 1 - settings.beep; updateSubscriptions(); }
+    } else if (b == B_L) {
+      if (setField == 0) setField = 1;
+      else mode = TIMER;
+    }
   }
   updateSubscriptions();
   draw();
@@ -239,8 +259,10 @@ function a_long() {
   pickBack = 0;
   draw();
 }
+// Holding L opens settings from the timer or stats; the picker keeps its own L hold.
 function l_long() {
   if (hush & (1 << B_L)) return;
   longFired |= 1 << B_L;
   lastPress = now();
+  if (mode == TIMER || mode == STATS) { mode = SET; setField = 0; messageUntil = 0; draw(); }
 }
