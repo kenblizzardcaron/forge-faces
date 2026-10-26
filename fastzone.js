@@ -41,7 +41,7 @@ function goalMain(g) {
 
 var fastStart = 0, lastEnd = 0, history = [], streak = 0, longest = 0, rung = 0;
 
-// A new fast starts at rung 0; rung counts the zone changes already announced.
+// A new fast starts at rung 0; rung becomes 1 once its goal beep has fired or been skipped.
 function startFast(at) { fastStart = at; rung = 0; }
 // Judged by the goal in effect at the end, so a goal change applies to the fast in progress.
 function endFast(at) {
@@ -76,6 +76,8 @@ var TIMER = 0, PICK = 1, STATS = 2, SET = 3, mode = TIMER;
 var message = '', messageUntil = 0, tickTimer = -1;
 // longFired is a bitmask by button id; lastPress restarts the picker's 10 s idle timer.
 var longFired = 0, lastPress = 0;
+// ringTimer runs the goal beep; hush is the buttons whose press silenced it, cleared on their release.
+var ringTimer = -1, ringLeft = 0, hush = 0;
 // pickStart 1 starts a fast, 0 ends one; pickBack is the backdate in minutes.
 var pickStart = 1, pickBack = 0;
 
@@ -90,9 +92,39 @@ function pickMax() {
   return Math.min(360, Math.floor(limit / 15) * 15);
 }
 
+// 500 ms beeps: 40 on screen, 10 off, so an unattended face goes quiet soon after the goal.
+function startRing(onScreen) {
+  ringLeft = onScreen ? 40 : 10;
+  ringTimer = Ollee.setInterval(ringStep, 500);
+  ringStep();
+}
+function ringStep() {
+  Ollee.beep();
+  if (--ringLeft <= 0) stopRing();
+}
+function stopRing() {
+  if (ringTimer != -1) Ollee.clearInterval(ringTimer);
+  ringTimer = -1;
+}
+// Rings once per fast when the goal passes; rung stops the minute tick from ringing it again.
+function checkGoal() {
+  if (fastStart && !rung && now() - fastStart >= settings.goal * HOUR) {
+    rung = 1;
+    if (settings.beep) startRing(Ollee.active());
+    updateSubscriptions();
+  }
+}
+// The minute tick is only needed while a goal is still to ring; on screen the 1 s tick covers it.
+function updateSubscriptions() {
+  if (fastStart && !rung && settings.beep) Ollee.subscribe(E_CLOCK_MINUTE);
+  else Ollee.unsubscribe(E_CLOCK_MINUTE);
+}
+function clock_minute() { checkGoal(); }
+
 // Redraws every second on screen; a flash ends on the first tick after its time.
 // A picker left idle for 10 s cancels back to the timer.
 function tick() {
+  checkGoal();
   if (mode != TIMER && now() - lastPress >= 10000) mode = TIMER;
   draw();
 }
@@ -133,16 +165,22 @@ function draw() {
 // Starts the 1 s tick; a fast in progress greets with its zone word, else the screen draws at once.
 function enter() {
   Ollee.clear();
+  checkGoal();
   tickTimer = Ollee.setInterval(tick, 1000);
   if (fastStart) flash(ZONE_WORDS[zoneOf(now() - fastStart) - 1], 1500);
   else draw();
 }
-// The platform cancels timers when the face leaves the screen.
-function exit() { tickTimer = -1; }
+// The platform cancels timers when the face leaves the screen, and a picker does not survive that.
+function exit() { tickTimer = -1; ringTimer = -1; mode = TIMER; }
 // Acts on release, as repladder does; a long press sets its bit so its release does nothing.
+// A press during a ring only silences it, and its release and long hook then do nothing.
 function button(b, e) {
   lastPress = now();
-  if (e != E_UP) return;
+  if (e != E_UP) {
+    if (ringTimer != -1) { stopRing(); hush |= 1 << b; }
+    return;
+  }
+  if (hush & (1 << b)) { hush &= ~(1 << b); return; }
   if (longFired & (1 << b)) { longFired &= ~(1 << b); return; }
   if (b == B_A && mode == TIMER) {
     if (fastStart) flash(ZONE_WORDS[zoneOf(now() - fastStart) - 1], 1500);
@@ -155,10 +193,12 @@ function button(b, e) {
     else endFast(now() - pickBack * MIN);
     mode = TIMER;
   }
+  updateSubscriptions();
   draw();
 }
 // Holding A opens the backdate picker: a start when not fasting, an end when fasting.
 function a_long() {
+  if (hush & (1 << B_A)) return;
   longFired |= 1 << B_A;
   lastPress = now();
   if (mode != TIMER) return;
@@ -167,4 +207,8 @@ function a_long() {
   pickBack = 0;
   draw();
 }
-function l_long() { longFired |= 1 << B_L; lastPress = now(); }
+function l_long() {
+  if (hush & (1 << B_L)) return;
+  longFired |= 1 << B_L;
+  lastPress = now();
+}

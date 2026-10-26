@@ -76,3 +76,12 @@ test('picker cancels after 10 s idle', () => {
   assert.equal(ctx.mode, ctx.TIMER);
   assert.equal(ctx.fastStart, 0);
 });
+
+test('leaving the face mid-picker returns to the timer', () => {
+  const { w, ctx } = fresh();
+  w.hold('A', 1100);
+  assert.equal(ctx.mode, ctx.PICK);
+  w.setActive(false);
+  w.setActive(true);
+  assert.equal(ctx.mode, ctx.TIMER);
+});
