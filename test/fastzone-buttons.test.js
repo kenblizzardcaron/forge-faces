@@ -125,3 +125,15 @@ test('a long press handler does nothing while the face is inactive', () => {
   assert.equal(ctx.longFired, 0);
   assert.equal(ctx.mode, ctx.TIMER);
 });
+
+test('stats and settings return to the timer after 10 s idle', () => {
+  const { w, ctx } = fresh();
+  w.tap('L');
+  assert.equal(ctx.mode, ctx.STATS);
+  w.advance(12000);
+  assert.equal(ctx.mode, ctx.TIMER);
+  w.hold('L', 1500);
+  assert.equal(ctx.mode, ctx.SET);
+  w.advance(12000);
+  assert.equal(ctx.mode, ctx.TIMER);
+});
