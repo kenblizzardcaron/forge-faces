@@ -262,7 +262,7 @@ function a_long() {
   pickBack = 0;
   draw();
 }
-// Holding L opens settings from the timer or stats; the picker keeps its own L hold.
+// Holding L opens settings from the timer or stats; holding it in the picker does nothing.
 function l_long() {
   if (!Ollee.active() || (hush & (1 << B_L))) return;
   longFired |= 1 << B_L;
