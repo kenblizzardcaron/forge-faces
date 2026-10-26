@@ -97,8 +97,37 @@ test('A in stats never starts a fast', () => {
   assert.equal(ctx.fastStart, 0);
 });
 
+// Reads every screen the face draws: the timer, each stats page, and the flashes after entering pages 2 and 3.
+function drawnScreens(w) {
+  const out = [w.main()];
+  w.tap('L');
+  out.push(w.main());
+  w.tap('L');
+  out.push(w.main());
+  w.tap('L');
+  out.push(w.main());
+  w.advance(2000);
+  out.push(w.main());
+  w.tap('L');
+  out.push(w.main());
+  w.advance(2000);
+  out.push(w.main());
+  w.tap('L');
+  out.push(w.main());
+  w.tap('L');
+  return out;
+}
+
 test('stats words keep their letters whole', () => {
-  for (const word of ['   AUG', '   tOP', '  ----', ' rEAdY', '7 oF 7', 'Str999']) {
-    assert.deepEqual(damage(word), [], word);
-  }
+  const empty = drawnScreens(loadFace('fastzone.js'));
+  const w = loadFace('fastzone.js');
+  const t = w.ctx.now();
+  fast(w.ctx, t - 2 * D - 20 * H, t - 2 * D);
+  fast(w.ctx, t - 1 * D - 20 * H, t - 1 * D);
+  const seeded = drawnScreens(w);
+  const drawn = empty.concat(seeded);
+  for (const main of drawn) assert.deepEqual(damage(main), [], JSON.stringify(main));
+  for (const word of [' rEAdY', '   AUG', '   tOP', '  ----']) assert.ok(drawn.includes(word), word);
+  assert.ok(seeded.some((m) => /^\d oF 7$/.test(m)), JSON.stringify(seeded));
+  assert.ok(seeded.some((m) => /^Str/.test(m)), JSON.stringify(seeded));
 });
