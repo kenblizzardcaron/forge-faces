@@ -44,7 +44,9 @@ var fastStart = 0, lastEnd = 0, history = [], streak = 0, longest = 0, rung = 0;
 // A new fast starts at rung 0; rung becomes 1 once its goal beep has fired or been skipped.
 function startFast(at) { fastStart = at; rung = 0; }
 // Judged by the goal in effect at the end, so a goal change applies to the fast in progress.
+// Under 15 min is a stray A tap while eating: it is dropped, so the streak survives.
 function endFast(at) {
+  if (at - fastStart < 15 * MIN) { fastStart = 0; return; }
   var hit = at - fastStart >= settings.goal * HOUR;
   history.unshift({ s: fastStart, e: at, hit: hit });
   if (history.length > 30) history.length = 30;

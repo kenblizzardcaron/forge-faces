@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { loadFace } = require('../tools/harness');
 
-const H = 3600000, D = 86400000;
+const H = 3600000, D = 86400000, MIN = 60000;
 function fresh() {
   const ctx = loadFace('fastzone.js').ctx;
   return { ctx, t: ctx.now() };
@@ -66,4 +66,27 @@ test('average covers the last 7 days', () => {
   fast(ctx, t - 20 * H, t - 2 * H);
   fast(ctx, t - 8 * D - 30 * H, t - 8 * D);
   assert.equal(ctx.avgMs(t), 17 * H);
+});
+
+test('a fast under 15 min is cancelled, not recorded', () => {
+  const w = loadFace('fastzone.js'), ctx = w.ctx;
+  ctx.streak = 2;
+  w.tap('A');
+  w.advance(5 * MIN);
+  w.hold('A', 1100);
+  w.tap('L');
+  assert.equal(ctx.history.length, 0);
+  assert.equal(ctx.streak, 2);
+  assert.equal(ctx.longest, 0);
+  assert.equal(ctx.lastEnd, 0);
+  assert.equal(ctx.fastStart, 0);
+});
+
+test('a fast of exactly 15 min is recorded', () => {
+  const w = loadFace('fastzone.js'), ctx = w.ctx;
+  w.tap('A');
+  w.advance(15 * MIN);
+  ctx.endFast(ctx.now());
+  assert.equal(ctx.history.length, 1);
+  assert.equal(ctx.longest, 15 * MIN);
 });

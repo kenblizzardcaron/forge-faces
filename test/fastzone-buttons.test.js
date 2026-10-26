@@ -62,6 +62,7 @@ test('ending a fast always goes through the picker', () => {
   w.tap('A');
   w.tap('A');
   assert.notEqual(ctx.fastStart, 0);
+  w.advance(15 * 60000);
   w.hold('A', 1100);
   w.tap('L');
   assert.equal(ctx.fastStart, 0);
