@@ -71,8 +71,53 @@ function avgMs(t) {
   return n ? sum / n : 0;
 }
 
-function enter() { Ollee.clear(); }
-function exit() {}
+// Screens: TIMER is the live countdown; the others arrive with their tasks.
+var TIMER = 0, PICK = 1, STATS = 2, SET = 3, mode = TIMER;
+var message = '', messageUntil = 0, tickTimer = -1;
+
+function flashing() { return now() < messageUntil; }
+function flash(word, ms) { message = word; messageUntil = now() + (ms || 1000); draw(); }
+
+// Redraws every second on screen; a flash ends on the first tick after its time.
+function tick() { draw(); }
+
+// The screen for the current mode, recomputed from the clock on every draw.
+function draw() {
+  if (!Ollee.active()) return;
+  var t = now(), main = ' rEAdY', day = '  ', colon = false, lap = false;
+  if (mode == TIMER) {
+    if (fastStart) {
+      var e = t - fastStart, goalMs = settings.goal * HOUR;
+      day = ' ' + zoneOf(e);
+      colon = true;
+      if (e < goalMs) { main = hms(goalMs - e); lap = true; }
+      else { main = hms(e - goalMs); lap = Math.floor(e / 1000) % 2 == 0; }
+    } else if (lastEnd) {
+      if (settings.goal < 24) {
+        var left = lastEnd + (24 - settings.goal) * HOUR - t;
+        if (left > 0) { main = hms(left); colon = true; }
+      } else {
+        main = hms(t - lastEnd);
+        colon = true;
+      }
+    }
+  }
+  if (flashing()) { main = message; colon = false; }
+  Ollee.drawMain(main);
+  Ollee.drawDay(day);
+  Ollee.drawColon(colon);
+  Ollee.drawLap(lap);
+}
+
+// Starts the 1 s tick; a fast in progress greets with its zone word, else the screen draws at once.
+function enter() {
+  Ollee.clear();
+  tickTimer = Ollee.setInterval(tick, 1000);
+  if (fastStart) flash(ZONE_WORDS[zoneOf(now() - fastStart) - 1], 1500);
+  else draw();
+}
+// The platform cancels timers when the face leaves the screen.
+function exit() { tickTimer = -1; }
 function button() {}
 function a_long() {}
 function l_long() {}
