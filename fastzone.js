@@ -166,6 +166,7 @@ function draw() {
 function enter() {
   Ollee.clear();
   checkGoal();
+  updateSubscriptions();
   tickTimer = Ollee.setInterval(tick, 1000);
   if (fastStart) flash(ZONE_WORDS[zoneOf(now() - fastStart) - 1], 1500);
   else draw();

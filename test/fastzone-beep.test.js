@@ -70,3 +70,11 @@ test('a hold that silences the ring opens no picker', () => {
   assert.notEqual(ctx.fastStart, 0);
   assert.equal(ctx.hush, 0);
 });
+
+test('entering mid-fast subscribes to the minute tick', () => {
+  const { w, ctx } = fresh();
+  ctx.fastStart = ctx.now() - 15 * H;
+  w.setActive(false);
+  w.setActive(true);
+  assert.equal(w.subscribed(E_CLOCK_MINUTE), true);
+});
