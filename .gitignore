@@ -3,3 +3,4 @@ package-lock.json
 *-local.js
 *-local.min.js
 local.json
+.superpowers/
