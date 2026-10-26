@@ -209,7 +209,8 @@ function enter() {
   else draw();
 }
 // The platform cancels timers when the face leaves the screen, and a picker does not survive that.
-function exit() { tickTimer = -1; ringTimer = -1; mode = TIMER; }
+// A press still open at exit never gets its release, so its hush and long bits are cleared here.
+function exit() { tickTimer = -1; ringTimer = -1; mode = TIMER; longFired = 0; hush = 0; }
 // Acts on release, as repladder does; a long press sets its bit so its release does nothing.
 // A press during a ring only silences it, and its release and long hook then do nothing.
 function button(b, e) {
@@ -252,7 +253,7 @@ function button(b, e) {
 }
 // Holding A opens the backdate picker: a start when not fasting, an end when fasting.
 function a_long() {
-  if (hush & (1 << B_A)) return;
+  if (!Ollee.active() || (hush & (1 << B_A))) return;
   longFired |= 1 << B_A;
   lastPress = now();
   if (mode != TIMER) return;
@@ -263,7 +264,7 @@ function a_long() {
 }
 // Holding L opens settings from the timer or stats; the picker keeps its own L hold.
 function l_long() {
-  if (hush & (1 << B_L)) return;
+  if (!Ollee.active() || (hush & (1 << B_L))) return;
   longFired |= 1 << B_L;
   lastPress = now();
   if (mode == TIMER || mode == STATS) { mode = SET; setField = 0; messageUntil = 0; draw(); }

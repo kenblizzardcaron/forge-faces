@@ -86,3 +86,42 @@ test('leaving the face mid-picker returns to the timer', () => {
   w.setActive(true);
   assert.equal(ctx.mode, ctx.TIMER);
 });
+
+test('a hold cut short by leaving the face does not swallow the next tap', () => {
+  const { w, ctx } = fresh();
+  w.hold('A', 500);
+  w.setActive(false);
+  w.setActive(true);
+  w.tap('A');
+  assert.notEqual(ctx.fastStart, 0);
+});
+
+test('a press during a ring, then leaving the face, does not swallow the next tap', () => {
+  const { w, ctx } = fresh();
+  ctx.startFast(ctx.now() - 16 * 3600000);
+  w.advance(1000);
+  assert.equal(ctx.ringTimer !== -1, true);
+  ctx.button(ctx.B_A, ctx.E_DOWN);
+  w.setActive(false);
+  w.setActive(true);
+  w.advance(2000);
+  w.tap('A');
+  assert.equal(ctx.flashing(), true);
+});
+
+test('leaving the face clears a long-press mark', () => {
+  const { w, ctx } = fresh();
+  ctx.longFired = 1;
+  w.setActive(false);
+  w.setActive(true);
+  assert.equal(ctx.longFired, 0);
+});
+
+test('a long press handler does nothing while the face is inactive', () => {
+  const { w, ctx } = fresh();
+  w.setActive(false);
+  ctx.a_long();
+  ctx.l_long();
+  assert.equal(ctx.longFired, 0);
+  assert.equal(ctx.mode, ctx.TIMER);
+});
