@@ -21,7 +21,7 @@ It ships as two parts:
 ## Goals
 
 - Start a fast after dinner with one press, or backdated when you remember late.
-- Count down to the goal fast length; the goal is whole hours, with IF labels (16:8, 18:4, 17:7…).
+- Count down to the goal fast length; the goal is whole hours, with IF labels (16:8, 18:6, 17:7…).
 - Show the fasting zone (1–5) at all times while fasting, and the zone's word on returning to the face.
 - Beep once when the goal is reached. The fast keeps running until you mark it over (also backdatable).
 - During eating, count down the eating window, as a suggestion only.
@@ -83,7 +83,7 @@ It ships as two parts:
 ### Goal
 
 - Whole hours, stepped one hour at a time (Ken's choice). Shown with the IF label: 16 → `16:8`,
-  17 → `17:7`, 18 → `18:4`, 23 → `23:1`, 12 → `12:12`. Range 12–48 h; above 23 the label is just
+  17 → `17:7`, 18 → `18:6`, 23 → `23:1`, 12 → `12:12`. Range 12–48 h; above 23 the label is just
   the hours (my call).
 - Default 16 (my call; most common). Bakeable with `local.json`.
 - **Goal beep:** when the fast reaches its goal. On screen it rings until any button, for up to 20 s;

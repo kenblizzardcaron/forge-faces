@@ -78,7 +78,7 @@ test('hms and hm', () => {
   assert.equal(ctx.hm(17 * 3600000 + 42 * 60000), '1742  ');
 });
 test('goal labels', () => {
-  assert.deepEqual([16, 17, 18, 23, 12, 36].map(ctx.goalMain), ['168   ', '177   ', '184   ', '231   ', '1212  ', '36    ']);
+  assert.deepEqual([16, 17, 18, 23, 12, 36].map(ctx.goalMain), ['168   ', '177   ', '186   ', '231   ', '1212  ', '36    ']);
 });
 test('baked goal and beep clamp', () => {
   assert.equal(loadSource(localize(src, 'fastzone', { goal: 99, beep: 5 })).ctx.settings.goal, 16);
@@ -301,7 +301,7 @@ Hold L from TIMER or STATS enters SET on the goal. In SET: A steps the field (go
 - [ ] **Step 1: Write the failing test** `test/fastzone-min.test.js`: `minified build starts, fasts and rings` — `loadFace('fastzone.min.js')`: main `' rEAdY'`; tap A; `advance(16 * 3600000 + 2000)` → at least one beep; and `fs.statSync('fastzone.min.js').size <= 8158`.
 - [ ] **Step 2:** Run it. Expected: FAIL (no min file).
 - [ ] **Step 3:** Run `node build.js`. Expected: a `fastzone.min.js: N bytes` line with N ≤ 8158 and exit 0. If N > 8158, cut in the spec's order (Longest page → Average page → history 30 → 10 → zone-word flash), removing the matching tests, and report what was cut.
-- [ ] **Step 4:** Add the README row after repladder's, matching its columns: `| [fastzone.js](fastzone.js) (upload [fastzone.min.js](fastzone.min.js)) | [fastzone.md](fastzone.md) | [Open in emulator](https://kenblizzardcaron.github.io/forge-faces/?face=fastzone) | Intermittent fasting timer: start or end a fast now or backdated, count down to a whole-hour goal (16:8, 18:4, 23:1…) through five fasting zones, one beep at the goal, and stats for the week, streak, average, longest and the last 30 fasts. |`
+- [ ] **Step 4:** Add the README row after repladder's, matching its columns: `| [fastzone.js](fastzone.js) (upload [fastzone.min.js](fastzone.min.js)) | [fastzone.md](fastzone.md) | [Open in emulator](https://kenblizzardcaron.github.io/forge-faces/?face=fastzone) | Intermittent fasting timer: start or end a fast now or backdated, count down to a whole-hour goal (16:8, 18:6, 23:1…) through five fasting zones, one beep at the goal, and stats for the week, streak, average, longest and the last 30 fasts. |`
 - [ ] **Step 5:** Run `node --test`. Expected: all pass.
 - [ ] **Step 6:** Commit `fastzone: minified build and README row`.
 
