@@ -39,6 +39,38 @@ function goalMain(g) {
   return g < 24 ? (pad(g) + (24 - g) + '      ').slice(0, 6) : pad(g) + '    ';
 }
 
+var fastStart = 0, lastEnd = 0, history = [], streak = 0, longest = 0, rung = 0;
+
+// A new fast starts at rung 0; rung counts the zone changes already announced.
+function startFast(at) { fastStart = at; rung = 0; }
+// Judged by the goal in effect at the end, so a goal change applies to the fast in progress.
+function endFast(at) {
+  var hit = at - fastStart >= settings.goal * HOUR;
+  history.unshift({ s: fastStart, e: at, hit: hit });
+  if (history.length > 30) history.length = 30;
+  streak = hit ? streak + 1 : 0;
+  longest = Math.max(longest, at - fastStart);
+  lastEnd = at;
+  fastStart = 0;
+}
+// Counts days, so two hits on one day show once in the week row.
+function weekHits(t) {
+  var today = Math.floor(t / DAY), seen = {}, n = 0;
+  for (var i = 0; i < history.length; i++) {
+    var d = Math.floor(history[i].e / DAY);
+    if (history[i].hit && d >= today - 6 && d <= today && !seen[d]) { seen[d] = true; n++; }
+  }
+  return n;
+}
+// Mean length of the fasts that ended in the last 7 days; 0 when there are none.
+function avgMs(t) {
+  var sum = 0, n = 0;
+  for (var i = 0; i < history.length; i++) {
+    if (history[i].e > t - 7 * DAY) { sum += history[i].e - history[i].s; n++; }
+  }
+  return n ? sum / n : 0;
+}
+
 function enter() { Ollee.clear(); }
 function exit() {}
 function button() {}
