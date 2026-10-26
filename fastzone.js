@@ -73,6 +73,8 @@ function avgMs(t) {
 
 // Screens: TIMER is the live countdown; the others arrive with their tasks.
 var TIMER = 0, PICK = 1, STATS = 2, SET = 3, mode = TIMER;
+// page is the STATS screen (0 to 4); histIdx picks a fast on page 4, newest first.
+var page = 0, histIdx = 0;
 var message = '', messageUntil = 0, tickTimer = -1;
 // longFired is a bitmask by button id; lastPress restarts the picker's 10 s idle timer.
 var longFired = 0, lastPress = 0;
@@ -155,11 +157,32 @@ function draw() {
     day = pickStart ? ' S' : ' E';
     colon = true;
   }
+  if (mode == STATS) {
+    var avg = avgMs(t), entry = history[histIdx];
+    if (page == 0) main = weekHits(t) + ' oF 7';
+    else if (page == 1) main = 'Str' + ('   ' + Math.min(streak, 999)).slice(-3);
+    else if (page == 2) { day = ' A'; colon = avg > 0; main = avg ? hm(avg) : '  ----'; }
+    else if (page == 3) { day = ' t'; colon = longest > 0; main = longest ? hm(longest) : '  ----'; }
+    else {
+      day = (' ' + (histIdx + 1)).slice(-2);
+      colon = !!entry;
+      lap = !!entry && entry.hit;
+      main = entry ? hm(entry.e - entry.s) : '  ----';
+    }
+  }
   if (flashing()) { main = message; colon = false; }
   Ollee.drawMain(main);
   Ollee.drawDay(day);
   Ollee.drawColon(colon);
   Ollee.drawLap(lap);
+}
+
+// Entering a page resets the history pick; the two word pages flash their name first.
+function enterPage(p) {
+  page = p; histIdx = 0; messageUntil = 0;
+  if (p == 2) flash('   AUG');
+  else if (p == 3) flash('   tOP');
+  else draw();
 }
 
 // Starts the 1 s tick; a fast in progress greets with its zone word, else the screen draws at once.
@@ -193,6 +216,14 @@ function button(b, e) {
     if (pickStart) startFast(now() - pickBack * MIN);
     else endFast(now() - pickBack * MIN);
     mode = TIMER;
+  } else if (b == B_L && mode == TIMER) {
+    mode = STATS;
+    enterPage(0);
+  } else if (b == B_L && mode == STATS) {
+    if (page == 4) { mode = TIMER; messageUntil = 0; }
+    else enterPage(page + 1);
+  } else if (b == B_A && mode == STATS && page == 4) {
+    histIdx = histIdx + 1 < history.length ? histIdx + 1 : 0;
   }
   updateSubscriptions();
   draw();
