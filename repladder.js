@@ -332,6 +332,28 @@ function maxLevel(p) {
 // Rest never drops below 30 s between sets: about one phosphocreatine-refill half-time, inside ACSM's
 // <=90 s endurance range; shorter, the next set is mostly a continuation of the last one.
 var MIN_REST = 30;
+// Seconds of rest that decay a set's stamina by 1/e.
+var TAU = 90;
+// exp(-x) by repeated squaring, not Math.exp: it is missing from some Espruino builds, and that disables the face.
+function decay(x) {
+  var v = 1 + x / 32;
+  for (var i = 0; i < 5; i++) v *= v;
+  return 1 / v;
+}
+// Peak of a decayed running total: a set after a short rest starts from what the last one left.
+// Infinity when plan() is null, so an impossible rung sorts last.
+function score(total, length, sets, pace, hold) {
+  var p = plan(total, length, sets, pace, hold);
+  if (!p) return Infinity;
+  var e = 0;
+  if (sets > 1) e = decay((length - total * pace) / (sets - 1) / TAU);
+  var d = 0, best = 0;
+  for (var k = 0; k < p.reps.length; k++) {
+    d = d * e + p.reps[k];
+    if (d > best) best = d;
+  }
+  return best;
+}
 // Calls emit(total, length, sets) per level in order until it returns true: add stretch, sets S..2 at top, last set.
 function eachRung(p, emit) {
   var S = p.sets, T = p.top, P = p.hold ? 1 : p.pace, B = p.base;
