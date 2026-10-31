@@ -35,7 +35,7 @@ e = decay(rest / TAU), rest = (length - total * pace) / (sets - 1), 0 for one se
 
 - `TAU = 90` seconds, a built-in constant. No published model covers this; 90 s is an estimate (see Evidence).
 - For holds a "rep" is a second and pace is 1, which `plan()` already does.
-- `decay(x)` is plain arithmetic, not `Math.exp`: `1 / (1 + x / 32)^32`, by five squarings. Espruino's `Math.exp` is excluded on `SAVE_ON_FLASH_EXTREME` builds, the Ollee's build is unknown and can't be tested in Beta 1, and an uncaught error disables a face on the watch. Swap to `Math.exp` once a real watch confirms it. It is 0.7173 against 0.7165 for x = 1/3.
+- `decay(x)` is plain arithmetic, not `Math.exp`: `1 / (1 + x / 32)^32`, by five squarings. Espruino's `Math.exp` is excluded on `SAVE_ON_FLASH_EXTREME` builds, the Ollee's build is unknown and can't be tested in Beta 1, and an uncaught error disables a face on the watch. Swap to `Math.exp` once a real watch confirms it. It is 0.7178 against 0.7165 for x = 1/3.
 
 ## The ladder
 
