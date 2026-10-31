@@ -35,7 +35,7 @@ e = decay(rest / TAU), rest = (length - total * pace) / (sets - 1), 0 for one se
 
 - `TAU = 90` seconds, a built-in constant. No published model covers this; 90 s is an estimate (see Evidence).
 - For holds a "rep" is a second and pace is 1, which `plan()` already does.
-- `decay(x)` is plain arithmetic, not `Math.exp`: `1 / (1 + x / 32)^32`, by five squarings. Espruino's `Math.exp` is excluded on `SAVE_ON_FLASH_EXTREME` builds and the Ollee's build is unknown; this avoids the question. It is 0.7173 against 0.7165 for x = 1/3.
+- `decay(x)` is plain arithmetic, not `Math.exp`: `1 / (1 + x / 32)^32`, by five squarings. Espruino's `Math.exp` is excluded on `SAVE_ON_FLASH_EXTREME` builds, the Ollee's build is unknown and can't be tested in Beta 1, and an uncaught error disables a face on the watch. Swap to `Math.exp` once a real watch confirms it. It is 0.7173 against 0.7165 for x = 1/3.
 
 ## The ladder
 
@@ -99,4 +99,4 @@ From the throwaway model, with τ = 90 s and the real `plan()`:
 
 ## On-watch check
 
-The owner runs this on their Ollee watch after the build; the plan ends at this hand-off. Two passes are needed: holding A on LEVEL goes from level 1 to 172 in under 30 s (17 s is the 100 ms repeat with no slowdown), and a session on an over-target level runs to the end. Rung walks in EDIT run on every redraw, so this is the one performance risk the Node tests can't catch.
+Forge is in Beta 1: faces run in the emulator only, and deploying to the watch is planned for Beta 2. The emulator doesn't model speed or memory, so nothing here can be measured yet and this work ships without it. Once Beta 2 is out, two passes are needed on a real watch: holding A on LEVEL goes from level 1 to 172 in under 30 s (17 s is the 100 ms repeat with no slowdown), and a session on an over-target level runs to the end. Rung walks in EDIT run on every redraw, so this is the one performance risk the Node tests can't catch.
