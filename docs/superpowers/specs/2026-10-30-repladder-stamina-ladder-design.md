@@ -47,6 +47,8 @@ e = decay(rest / TAU), rest = (length - total * pace) / (sets - 1), 0 for one se
 4. **Over target.** Only when S > 1. 2 sets at the rest floor, total T + o, T + 2o, ... with `o = ceil(T / 50)` and length `t * P + MIN_REST`. Stops before the first rung whose score reaches T, whose total passes 999, or whose length passes 5985 s, so no rung overruns the LCD.
 5. **Goal.** `emit(T, T * P, 1)`.
 
+On a ladder past 999 levels, level 999 is the goal rung, so the last level stays reachable.
+
 The score is computed at set drops and in stretch 4, not on every rung, so `rungAt` and `maxLevel` stay close to today's cost per rung. Stretches 2 and 3 replace the 15 s cut and the reset to LEn.
 
 ## Results

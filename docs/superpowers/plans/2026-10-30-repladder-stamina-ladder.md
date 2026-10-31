@@ -188,7 +188,7 @@ function eachRung(p, emit) {
     while (first || len > floor) {
       if (!first) len = Math.max(floor, len - 5);
       first = false;
-      if (score(T, len, s, P, H) >= hi) { hi = 0; if (emit(T, len, s)) return; }
+      if (!hi || score(T, len, s, P, H) >= hi) { hi = 0; if (emit(T, len, s)) return; }
     }
   }
   if (S > 1) for (var o = Math.ceil(T / 50), x = T + o; x <= 999 && x * P + MIN_REST <= 5985 && score(x, x * P + MIN_REST, 2, P, H) < T; x += o) if (emit(x, x * P + MIN_REST, 2)) return;

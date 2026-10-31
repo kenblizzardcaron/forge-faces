@@ -316,6 +316,8 @@ function plan(total, length, sets, pace, hold) {
 function rungAt(p, n) {
   var c = 0, out = null;
   if (n < 1) return null;
+  // 999 is the last level the LCD can show, so a longer ladder ends there on its goal.
+  if (n == 999) n = maxLevel(p);
   eachRung(p, function (total, length, sets) {
     if (++c < n) return false;
     out = { total: total, length: length, sets: sets, pace: p.hold ? 1 : p.pace, hold: p.hold };
@@ -336,7 +338,7 @@ function lastLevel(p) { return Math.min(999, maxLevel(p)); }
 var MIN_REST = 30;
 // Seconds of rest that decay a set's stamina by 1/e.
 var TAU = 90;
-// exp(-x) by repeated squaring, not Math.exp: it is missing from some Espruino builds, and that disables the face.
+// Approximates exp(-x) by repeated squaring, not Math.exp: it is missing from some Espruino builds, and that disables the face.
 function decay(x) {
   var v = 1 + x / 32;
   for (var i = 0; i < 5; i++) v *= v;
@@ -374,7 +376,7 @@ function eachRung(p, emit) {
     while (first || len > floor) {
       if (!first) len = Math.max(floor, len - 5);
       first = false;
-      if (score(T, len, s, P, H) >= hi) { hi = 0; if (emit(T, len, s)) return; }
+      if (!hi || score(T, len, s, P, H) >= hi) { hi = 0; if (emit(T, len, s)) return; }
     }
   }
   if (S > 1) for (var o = Math.ceil(T / 50), x = T + o; x <= 999 && x * P + MIN_REST <= 5985 && score(x, x * P + MIN_REST, 2, P, H) < T; x += o) if (emit(x, x * P + MIN_REST, 2)) return;
@@ -389,8 +391,7 @@ function phaseAt(p, ms) {
 // Level 0 takes the profile's manual fields; a level takes its rung. Clamps the level first.
 function load() {
   var p = cur();
-  var last = lastLevel(p);
-  if (p.level > last) p.level = last;
+  if (p.level > 0) p.level = Math.min(p.level, lastLevel(p));
   if (p.level > 0) session = rungAt(p, p.level);
   else session = { total: p.top, length: p.base, sets: p.sets, pace: p.hold ? 1 : p.pace, hold: p.hold };
 }

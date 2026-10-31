@@ -52,7 +52,7 @@ Key rungs of those four:
 
 You never have to guess where to start: scroll LEVEL and the screen previews each level's sets and total, so stop at what you can do today.
 
-Changing LASt, SEtS, PACE, LEn or TYPE on a level reshapes the ladder. LASt can't go below the ladder's easiest session, the level moves down if the ladder got shorter, and a change that would make the ladder longer than 999 levels wraps that field back to its minimum. Every level runs.
+Changing LASt, SEtS, PACE, LEn or TYPE on a level reshapes the ladder. LASt can't go below the ladder's easiest session, the level moves down if the ladder got shorter, and a change that would make the ladder longer than 999 levels wraps that field back to its minimum. Every level runs. A ladder that still runs past 999 levels ends at level 999, on its last level.
 
 Reps split into declining sets; when the total doesn't divide evenly, the extra reps go to the first sets (100 in 4 sets → 27, 26, 24, 23). Holds are equal (5:00 in 4 holds → 75 s each). Rest is split evenly between sets, with none after the last.
 
@@ -79,9 +79,9 @@ Reps split into declining sets; when the total doesn't divide evenly, the extra 
 | Edit TYPE | `rEPS` or `HOLd` |
 | Edit LASt | ` 1` (one set) on the day digits and the last level's total on the main digits (`    50`, or ` 5:00` for a hold) |
 | Edit LEVEL | The level's sets on the day digits, the level and its total on the main digits (` 77 91`); `oFF` at level 0 |
-| Offer | `UP` and the next level on the main digits (`UP  40`) after a ladder finish below the last level |
+| Offer | `UP` and the next level on the main digits (` 78 UP`) after a ladder finish below the last level |
 | Last level | `GOAL` for 3 s when you accept the slot's last level |
-| Lead-in | 5 to 1 on the day digits while the main digits spell out the session, one per second: `rEP 91` (or `HOLd`), `10:00`, `SEtS 5`, `LEU 77`, then `GO` with set 1's reps (`GO  21`). At level 0, `PACE 3` in place of the level (`oFF` for a hold) |
+| Lead-in | 5 to 1 on the day digits while the main digits spell out the session, one per second: `91 rEP` (or `HOLd`), `10:00`, `5 SEtS`, `77 LEU`, then `GO` with set 1's reps (`GO  21`). At level 0, `3 SEC` in place of the level (`oFF` for a hold) |
 | Work | `S3`, time until the next set starts (work plus the rest after it; until the end on the last set) and this set's reps; the beep still marks the end of the work at PACE. A hold shows only its time left |
 | Rest | `r2`, rest left and next set's reps (or hold seconds), with LAP blinking |
 | Done | `donE` |

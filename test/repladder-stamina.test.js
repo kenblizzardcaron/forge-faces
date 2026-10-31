@@ -103,3 +103,17 @@ test('a session at 999 on a longer ladder offers nothing', () => {
   assert.equal(w.ctx.state, w.ctx.DONE);
   assert.equal(p.level, 999);
 });
+
+test('level 999 on a longer ladder is the goal', () => {
+  const w = loadClassic();
+  const p = w.ctx.cur();
+  Object.assign(p, { hold: 1, sets: 1, top: 1200, base: 1800, level: 998 });
+  w.ctx.load();
+  assert.deepEqual([w.ctx.rungAt(p, 999).sets, w.ctx.rungAt(p, 999).total, w.ctx.rungAt(p, 999).length], [1, 1200, 1200]);
+  w.tap('A');
+  w.advance(5000 + w.ctx.session.length * 1000 + 11000);
+  assert.equal(w.ctx.state, w.ctx.OFFER);
+  w.tap('A');
+  assert.equal(w.main(), '  GOAL');
+  assert.equal(p.level, 999);
+});
