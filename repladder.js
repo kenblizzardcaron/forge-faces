@@ -41,7 +41,7 @@ function cur() { return profiles[settings.profile]; }
 function onPhase(i) {
   lastPhase = i;
   if (i == current.ends.length) {
-    state = cur().level > 0 && cur().level < maxLevel(cur()) ? OFFER : DONE;
+    state = cur().level > 0 && cur().level < lastLevel(cur()) ? OFFER : DONE;
     startRing(Ollee.active()); updateSubscriptions(); return;
   }
   Ollee.beep();
@@ -213,7 +213,7 @@ function bump() {
     if (key == 'hold') {
       p.hold = 1 - p.hold;
       if (p.hold) p.top = Math.ceil(p.top / 5) * 5;
-    } else if (key == 'level') p.level = p.level < Math.min(999, maxLevel(p)) ? p.level + 1 : 0;
+    } else if (key == 'level') p.level = p.level < lastLevel(p) ? p.level + 1 : 0;
     else {
       lim = key == 'top' ? topRange(p) : LIMITS[key];
       var v = p[key] + lim[2];
@@ -275,7 +275,7 @@ function button(b, e) {
     else if (state == OFFER && b == B_A) {
       setLevel(cur().level + 1);
       state = IDLE;
-      if (cur().level == maxLevel(cur())) flash('GOAL', 3000);
+      if (cur().level == lastLevel(cur())) flash('GOAL', 3000);
     }
     else if (state == OFFER && b == B_L) state = IDLE;
   }
@@ -329,6 +329,8 @@ function maxLevel(p) {
   eachRung(p, function () { c++; return false; });
   return c;
 }
+// 999 is the last level: the LCD holds three level digits.
+function lastLevel(p) { return Math.min(999, maxLevel(p)); }
 // Rest never drops below 30 s between sets: about one phosphocreatine-refill half-time, inside ACSM's
 // <=90 s endurance range; shorter, the next set is mostly a continuation of the last one.
 var MIN_REST = 30;
@@ -387,7 +389,8 @@ function phaseAt(p, ms) {
 // Level 0 takes the profile's manual fields; a level takes its rung. Clamps the level first.
 function load() {
   var p = cur();
-  if (p.level > maxLevel(p)) p.level = maxLevel(p);
+  var last = lastLevel(p);
+  if (p.level > last) p.level = last;
   if (p.level > 0) session = rungAt(p, p.level);
   else session = { total: p.top, length: p.base, sets: p.sets, pace: p.hold ? 1 : p.pace, hold: p.hold };
 }
