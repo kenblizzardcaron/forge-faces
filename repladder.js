@@ -354,21 +354,28 @@ function score(total, length, sets, pace, hold) {
   }
   return best;
 }
-// Calls emit(total, length, sets) per level in order until it returns true: add stretch, sets S..2 at top, last set.
+// Calls emit(total, length, sets) per level in order until it returns true. Stretches: add reps, cut time,
+// drop sets, over target (2 sets, total past top), last set. Each rung is never easier than the one before.
 function eachRung(p, emit) {
-  var S = p.sets, T = p.top, P = p.hold ? 1 : p.pace, B = p.base;
-  var step = p.hold ? S : Math.ceil(T / 50), t = p.hold ? 10 * S : S * (S + 1) / 2;
+  var S = p.sets, T = p.top, H = p.hold, P = H ? 1 : p.pace, B = p.base;
+  var step = H ? S : Math.ceil(T / 100), t = H ? 10 * S : S * (S + 1) / 2;
   for (;;) {
     t = Math.min(T, t);
     if (emit(t, Math.max(B, t * P + MIN_REST * (S - 1)), S)) return;
     if (t == T) break;
     t += step;
   }
+  var len = Math.max(B, T * P + MIN_REST * (S - 1));
   for (var s = S; s > 1; s--) {
-    var floor = T * P + MIN_REST * (s - 1), L0 = Math.max(B, floor);
-    if (s < S && emit(T, L0, s)) return;
-    for (var len = L0 - 15; len >= floor; len -= 15) if (emit(T, len, s)) return;
+    // A set drop keeps the time; rungs still easier than the last one are skipped.
+    var floor = T * P + MIN_REST * (s - 1), hi = s < S ? score(T, len, s + 1, P, H) : 0, first = s < S;
+    while (first || len > floor) {
+      if (!first) len = Math.max(floor, len - 5);
+      first = false;
+      if (score(T, len, s, P, H) >= hi) { hi = 0; if (emit(T, len, s)) return; }
+    }
   }
+  if (S > 1) for (var o = Math.ceil(T / 50), x = T + o; x <= 999 && x * P + MIN_REST <= 5985 && score(x, x * P + MIN_REST, 2, P, H) < T; x += o) if (emit(x, x * P + MIN_REST, 2)) return;
   emit(T, T * P, 1);
 }
 // Index of the phase running at ms (first end after ms); ends.length once the session is over.

@@ -84,7 +84,7 @@ test('lead-in', () => {
 test('lead-in on a level', () => {
   const w = loadClassic();
   w.advance(1000);
-  w.ctx.setLevel(45);
+  w.ctx.setLevel(89);
   w.tap('A');
   assert.equal(w.main(), '100rEP');
   assert.equal(w.day(), ' 5');
@@ -97,7 +97,7 @@ test('lead-in on a level', () => {
   assert.equal(w.main(), '5 SEtS');
   assert.equal(w.day(), ' 3');
   w.advance(1000);
-  assert.equal(w.main(), '45 LEU');
+  assert.equal(w.main(), '89 LEU');
   assert.equal(w.day(), ' 2');
   w.advance(1000);
   assert.equal(w.main(), 'GO  22');
@@ -108,7 +108,7 @@ test('lead-in on a level', () => {
 test('lead-in GO with one set of 100', () => {
   const w = loadClassic();
   w.advance(1000);
-  w.ctx.setLevel(118);
+  w.ctx.setLevel(999);
   w.tap('A');
   w.advance(4000);
   assert.equal(w.main(), 'GO 100');

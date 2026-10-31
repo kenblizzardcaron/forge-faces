@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { loadClassic } = require('./repladder-helpers');
 
-// Fresh face past the intro (default level 19); at(ms) advances until elapsed() equals ms.
+// Fresh face past the intro (default level 37); at(ms) advances until elapsed() equals ms.
 function fresh() {
   const w = loadClassic();
   w.advance(1000);
@@ -18,11 +18,11 @@ test('offer after finish', () => {
   w.advance(10000);
   assert.equal(w.ctx.state, 4);
   assert.equal(w.day(), '  ');
-  assert.equal(w.main(), ' 20 UP');
+  assert.equal(w.main(), ' 38 UP');
   w.tap('A');
   assert.equal(w.ctx.state, 0);
-  assert.equal(w.ctx.cur().level, 20);
-  assert.equal(w.ctx.session.total, 53);
+  assert.equal(w.ctx.cur().level, 38);
+  assert.equal(w.ctx.session.total, 52);
   assert.equal(w.day(), 'S1');
 });
 
@@ -32,7 +32,7 @@ test('decline keeps the level', () => {
   w.at(610000);
   w.tap('L');
   assert.equal(w.ctx.state, 0);
-  assert.equal(w.ctx.cur().level, 19);
+  assert.equal(w.ctx.cur().level, 37);
 });
 
 test('hush', () => {
@@ -40,10 +40,10 @@ test('hush', () => {
   w.tap('A');
   w.at(601100);
   w.tap('A');
-  assert.equal(w.ctx.cur().level, 19);
-  assert.equal(w.main(), ' 20 UP');
+  assert.equal(w.ctx.cur().level, 37);
+  assert.equal(w.main(), ' 38 UP');
   w.tap('A');
-  assert.equal(w.ctx.cur().level, 20);
+  assert.equal(w.ctx.cur().level, 38);
 });
 
 test('no offer after reset', () => {
@@ -54,34 +54,34 @@ test('no offer after reset', () => {
   w.tap('L');
   w.advance(700000);
   assert.equal(w.ctx.state, 0);
-  assert.equal(w.ctx.cur().level, 19);
+  assert.equal(w.ctx.cur().level, 37);
 });
 
 test('no offer at max', () => {
   const w = fresh();
-  w.ctx.setLevel(108);
+  w.ctx.setLevel(152);
   w.tap('A');
   w.at(310000);
   assert.equal(w.ctx.state, 2);
   w.tap('A');
   assert.equal(w.ctx.state, 0);
-  assert.equal(w.ctx.cur().level, 108);
+  assert.equal(w.ctx.cur().level, 152);
 });
 
 test('offer to max', () => {
   const w = fresh();
-  // Level 107: 2 sets of 100 in 5:30 (the 30 s rest floor); the offer follows the finish ring.
-  w.ctx.setLevel(107);
+  // Level 151: 2 sets of 116 in 6:18; the offer follows the finish ring.
+  w.ctx.setLevel(151);
   w.tap('A');
-  w.at(340000);
-  assert.equal(w.main(), '108 UP');
+  w.at(388000);
+  assert.equal(w.main(), '152 UP');
   w.tap('A');
   assert.equal(w.main(), '  GOAL');
   w.advance(2999);
   assert.equal(w.main(), '  GOAL');
   w.advance(1);
   assert.equal(w.day(), 'S1');
-  assert.equal(w.ctx.cur().level, 108);
+  assert.equal(w.ctx.cur().level, 152);
 });
 
 test('offer off screen', () => {
@@ -93,9 +93,9 @@ test('offer off screen', () => {
   w.minute();
   w.advance(10000);
   w.setActive(true);
-  assert.equal(w.main(), ' 20 UP');
+  assert.equal(w.main(), ' 38 UP');
   w.tap('A');
-  assert.equal(w.ctx.cur().level, 20);
+  assert.equal(w.ctx.cur().level, 38);
 });
 
 test('overlapping presses during the ring', () => {
@@ -105,11 +105,11 @@ test('overlapping presses during the ring', () => {
   w.ctx.button(0, 0);
   w.ctx.button(1, 0);
   w.ctx.button(0, 1);
-  assert.equal(w.ctx.cur().level, 19);
+  assert.equal(w.ctx.cur().level, 37);
   assert.equal(w.ctx.state, 4);
   w.ctx.button(1, 1);
   assert.equal(w.ctx.state, 0);
-  assert.equal(w.ctx.cur().level, 19);
+  assert.equal(w.ctx.cur().level, 37);
 });
 
 test('offer keeps base', () => {

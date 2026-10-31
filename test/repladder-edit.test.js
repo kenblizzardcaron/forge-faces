@@ -11,7 +11,7 @@ function fresh() {
   return w;
 }
 
-// Fresh face on PUSH's default level 19, idle, past the intro.
+// Fresh face on PUSH's default level 37, idle, past the intro.
 function ladder() {
   const w = loadClassic();
   w.advance(1000);
@@ -143,7 +143,7 @@ test('switching keeps each level', () => {
   w.tap('A');
   w.tap('A');
   assert.equal(w.ctx.cur().name, 'PUSH');
-  assert.equal(w.ctx.cur().level, 19);
+  assert.equal(w.ctx.cur().level, 37);
   assert.equal(w.ctx.session.total, 51);
   w.tap('A');
   assert.equal(w.ctx.cur().name, 'PULL');
@@ -193,7 +193,7 @@ test('manual ignores the level cap', () => {
 
 test('editing clamps the level', () => {
   const w = ladder();
-  w.ctx.setLevel(118);
+  w.ctx.setLevel(999);
   w.ctx.cur().sets = 9;
   w.tap('L');
   w.tap('L');
@@ -240,7 +240,7 @@ test('top fits 99:45', () => {
 
 test('level wrap', () => {
   const w = ladder();
-  w.ctx.setLevel(118);
+  w.ctx.setLevel(999);
   w.tap('L');
   w.tap('L');
   w.tap('L');
@@ -312,11 +312,11 @@ test('level field', () => {
   w.tap('L');
   assert.equal(w.main(), ' LEUEL');
   w.advance(1000);
-  assert.equal(w.main(), ' 19 51');
+  assert.equal(w.main(), ' 37 51');
   assert.equal(w.day(), ' 5');
   w.tap('A');
-  assert.equal(w.main(), ' 20 53');
-  assert.equal(w.ctx.session.total, 53);
+  assert.equal(w.main(), ' 38 52');
+  assert.equal(w.ctx.session.total, 52);
   for (let i = 0; i < 4; i++) w.tap('L');
   assert.equal(w.ctx.state, 0);
   assert.equal(w.day(), 'S1');
@@ -355,8 +355,8 @@ test('session time on a level', () => {
 test('base carries through levels', () => {
   const w = ladder();
   w.ctx.cur().base = 720;
-  w.ctx.setLevel(55);
-  assert.equal(w.ctx.session.length, 555);
+  w.ctx.setLevel(89);
+  assert.equal(w.ctx.session.length, 705);
   w.ctx.setLevel(26);
   assert.equal(w.ctx.session.length, 720);
 });
