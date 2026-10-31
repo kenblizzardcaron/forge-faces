@@ -213,7 +213,7 @@ function bump() {
     if (key == 'hold') {
       p.hold = 1 - p.hold;
       if (p.hold) p.top = Math.ceil(p.top / 5) * 5;
-    } else if (key == 'level') p.level = p.level < maxLevel(p) ? p.level + 1 : 0;
+    } else if (key == 'level') p.level = p.level < Math.min(999, maxLevel(p)) ? p.level + 1 : 0;
     else {
       lim = key == 'top' ? topRange(p) : LIMITS[key];
       var v = p[key] + lim[2];

@@ -81,3 +81,14 @@ test('an over-target session runs to the offer', () => {
   w.advance(5000 + w.ctx.session.length * 1000 + 1000);
   assert.equal(w.ctx.state, w.ctx.OFFER);
 });
+
+test('LEVEL stops at 999 on a ladder longer than that', () => {
+  const w = loadClassic();
+  const p = w.ctx.cur();
+  Object.assign(p, { hold: 1, sets: 1, top: 1200, base: 1800, level: 999 });
+  w.ctx.load();
+  assert.ok(w.ctx.maxLevel(p) > 999);
+  for (let i = 0; i < 4; i++) w.tap('L');
+  w.tap('A');
+  assert.equal(p.level, 0);
+});
