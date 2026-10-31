@@ -7,7 +7,7 @@ test('every word the face draws keeps its letters whole on the tied cells', () =
   const ctx = loadFace('repladder.js').ctx;
   const words = [
     ...['level', 'sets', 'pace', 'base'].map((k) => ctx.wordFor(k)), ctx.wordFor('top'),
-    ' donE ', '  rEPS', '  HOLd', '   oFF', 'PAUSE', 'rESEt', 'Error', 'GOAL',
+    ' donE ', '  rEPS', '  HOLd', '   oFF', '  rESt', 'PAUSE', 'rESEt', 'Error', 'GOAL',
     ...[1, 9, 15, 91, 100, 999].map((n) => ctx.tag(n, 'rEP')),
     ...[1, 5, 9].map((n) => ctx.tag(n, 'SEtS')),
     ...[1, 39, 118, 999].map((n) => ctx.tag(n, 'LEU')),

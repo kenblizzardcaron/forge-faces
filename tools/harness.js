@@ -152,6 +152,7 @@ function wrap(w) {
       w.active = false;
     },
     minute: () => { if (w.bgSubs & E.E_CLOCK_MINUTE) callHook(w, 'clock_minute'); },
+    hour: () => { if (w.bgSubs & E.E_CLOCK_HOUR) callHook(w, 'clock_hour'); },
     subscribed: (bit) => (w.bgSubs & bit) !== 0,
   };
 }

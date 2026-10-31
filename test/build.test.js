@@ -68,3 +68,41 @@ test('faces without presets reject them', () => {
 test('beepStyle bakes in', () => {
   assert.equal(loadSource(localize(mt, 'multitimer', { beepStyle: 2 })).ctx.beepStyle, 2);
 });
+
+const weekSrc = "var settings = { profile: 0 };\nvar profiles = [{ name: 'A', level: 1 }, { name: 'B', level: 1 }];\nvar week = null;\n";
+
+test('week names and rESt become indices', () => {
+  const out = localize(weekSrc, 'test', { profiles: [{ name: 'A' }, { name: 'B' }], week: ['A', 'rESt', 'B', 'A', 'B', 'A', 'B'] });
+  assert.deepEqual([...loadSource(out).ctx.week], [0, -1, 1, 0, 1, 0, 1]);
+});
+
+test('week matches slot names after trim', () => {
+  const out = localize(weekSrc, 'test', { profiles: [{ name: 'PUSH ' }, { name: 'PULL' }], week: ['PUSH', 'rESt', 'PULL ', 'PUSH', 'PULL', 'PUSH', 'PULL'] });
+  assert.deepEqual([...loadSource(out).ctx.week], [0, -1, 1, 0, 1, 0, 1]);
+});
+
+test('week takes slot names from src without profiles', () => {
+  const out = localize(weekSrc, 'test', { week: ['B', 'A', 'B', 'A', 'B', 'A', 'rESt'] });
+  assert.deepEqual([...loadSource(out).ctx.week], [1, 0, 1, 0, 1, 0, -1]);
+});
+
+test('week must be 7 entries', () => {
+  assert.throws(() => localize(weekSrc, 'test', { week: ['A', 'B', 'A', 'B', 'A', 'B'] }),
+    /test week must be 7 entries, Monday first/);
+  assert.throws(() => localize(weekSrc, 'test', { week: Array(8).fill('A') }),
+    /test week must be 7 entries, Monday first/);
+});
+
+test('week with an unknown name fails', () => {
+  assert.throws(() => localize(weekSrc, 'test', { week: ['A', 'Z', 'B', 'A', 'B', 'A', 'B'] }),
+    /test week has no slot "Z"/);
+});
+
+test('faces without a week list reject week', () => {
+  const noWeek = weekSrc.replace('var week = null;', '');
+  assert.throws(() => localize(noWeek, 'test', { week: Array(7).fill('A') }), /test has no week list/);
+});
+
+test('no week override leaves the week line alone', () => {
+  assert.equal(localize(weekSrc, 'test', {}), weekSrc);
+});

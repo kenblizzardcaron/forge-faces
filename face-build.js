@@ -26,12 +26,18 @@
   }
 
   // Swaps each setting into the face's `var settings = { ... };`; `profiles` and `presets` replace their lists.
-  // The boot `profile` index must land in the resulting list, or the face's cur() is undefined.
+  // `week` maps slot names to indices (rESt = -1) into `var week`. The boot `profile` index must land in the list.
   function localize(src, name, overrides) {
-    const { profiles, presets, ...settings } = overrides;
+    const { profiles, presets, week, ...settings } = overrides;
     const re = /var profiles = \[[\s\S]*?\];/;
     if (profiles !== undefined && (!Array.isArray(profiles) || profiles.length === 0)) {
       throw new Error(`local.json: ${name} profiles must be a non-empty list`);
+    }
+    if (week !== undefined) {
+      if (!Array.isArray(week) || week.length !== 7 || !week.every((w) => typeof w === 'string')) {
+        throw new Error(`local.json: ${name} week must be 7 entries, Monday first`);
+      }
+      if (!/var week = null;/.test(src)) throw new Error(`local.json: ${name} has no week list`);
     }
     if (presets !== undefined) {
       const ok = Array.isArray(presets) && presets.length === 10 &&
@@ -48,6 +54,18 @@
       return literal;
     });
     if (presets !== undefined) out = out.replace(/var presets = \[[^\]]*\];/, () => `var presets = ${JSON.stringify(presets)};`);
+    if (week !== undefined) {
+      const names = profiles ? profiles.map((p) => p.name)
+        : [...(src.match(re) || [''])[0].matchAll(/name: '([^']*)'/g)].map((m) => m[1]);
+      const slots = names.map((s) => String(s).trim());
+      const indices = week.map((entry) => {
+        if (entry === 'rESt') return -1;
+        const i = slots.indexOf(entry.trim());
+        if (i < 0) throw new Error(`local.json: ${name} week has no slot "${entry}"`);
+        return i;
+      });
+      out = out.replace(/var week = null;/, () => `var week = ${JSON.stringify(indices)};`);
+    }
     const hasList = re.test(src);
     let count = 0;
     if (profiles) {

@@ -1,12 +1,16 @@
 // Rep Ladder: a set-by-set rep ladder timer with a work/rest session plan.
 // Upload repladder.min.js, the built copy of this file.
-const subscribe = E_BUTTONS + E_A_LONG;
+const subscribe = E_BUTTONS + E_A_LONG + E_L_LONG;
 var settings = { profile: 0 };
+// Weekly plan: 7 slot indices, Monday first, -1 for rest; null means no plan.
+var week = null;
 var profiles = [{ name: 'SLOt 1', hold: 0, sets: 5, top: 50, pace: 3, base: 600, level: 1 }, { name: 'SLOt 2', hold: 0, sets: 5, top: 50, pace: 3, base: 600, level: 1 }, { name: 'SLOt 3', hold: 0, sets: 5, top: 50, pace: 3, base: 600, level: 1 }, { name: 'SLOt 4', hold: 0, sets: 5, top: 50, pace: 3, base: 600, level: 1 }, { name: 'SLOt 5', hold: 0, sets: 5, top: 50, pace: 3, base: 600, level: 1 }];
 // The session the face runs and draws; load() derives it from the active profile.
 var session = null;
 
-var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3, OFFER = 4;
+var IDLE = 0, RUNNING = 1, DONE = 2, EDIT = 3, OFFER = 4, WEEK = 5;
+var DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+var weekDay = 0, planDay = -1, rest = 0;
 var state = IDLE, startAt = 0, paused = false, pausedAt = 0, current = null, lastPhase = -1, message = '', messageUntil = 0;
 var displayTimer = -1, longFired = 0, hush = 0;
 // Edit: L cycles fields; A steps the current one, and holding A repeats every 100 ms on its own slot.
@@ -91,6 +95,11 @@ function draw() {
     day = p ? 'S1' : 'Er';
     main = preview(session);
     colon = true;
+    if (rest) { day = '  '; main = '  rESt'; colon = false; }
+  } else if (state == WEEK) {
+    // The week editor: the day, then its slot (or rest).
+    day = DAYS[weekDay];
+    main = week[weekDay] < 0 ? '  rESt' : ('      ' + profiles[week[weekDay]].name).slice(-6);
   } else if (state == EDIT) {
     var q = plan(session.total, session.length, session.sets, session.pace, session.hold), key = FIELDS[field], v = cur()[key];
     if (key == 'profile') {
@@ -175,13 +184,28 @@ function start() {
   current = p; state = RUNNING; startAt = now() + 5000; paused = false; lastPhase = -1; cue = 6;
 }
 
-// Entering idle shows the face name for 1 s; a running session goes straight to its countdown.
+// Entering idle flashes the slot name for 1 s unless resting; a running session goes straight to its countdown.
 function enter() {
   Ollee.clear();
   displayTimer = -1;
   catchUp();
-  if (state == IDLE) flash(('      ' + cur().name).slice(-6)); else draw();
+  planToday();
+  if (state == IDLE && !rest) flash(('      ' + cur().name).slice(-6)); else draw();
 }
+// Weekday from the wall-clock day number, Monday = 0 (1970-01-01 was a Thursday).
+function weekday() { return (Math.floor(now() / 864e5) + 3) % 7; }
+// Applies today's slot once per day number, so a manual override holds until midnight.
+function planToday() {
+  if (!week || state != IDLE) return;
+  Ollee.subscribe(E_CLOCK_HOUR);
+  var d = Math.floor(now() / 864e5);
+  if (d == planDay) return;
+  planDay = d;
+  var s = week[weekday()];
+  rest = s < 0 ? 1 : 0;
+  if (!rest) { settings.profile = s; load(); }
+}
+function clock_hour() { planToday(); draw(); }
 // The platform cancels timers when the face leaves the screen.
 function exit() { displayTimer = -1; ringTimer = -1; repeatTimer = -1; }
 
@@ -244,12 +268,25 @@ function stopRepeat() {
   if (repeatTimer != -1) Ollee.clearInterval(repeatTimer);
   repeatTimer = -1;
 }
-// A long press in EDIT starts hold-to-repeat; the A release stops it and adds no tap step.
+// A long press in EDIT starts hold-to-repeat; in IDLE it steps the slot once (rest first). Its release adds no tap.
 function a_long() {
-  longFired = 1;
+  longFired |= 1 << B_A;
   if (state == EDIT && repeatTimer == -1) repeatTimer = Ollee.setInterval(repeatStep, 100);
+  if (state == IDLE) {
+    if (rest) rest = 0;
+    else { settings.profile = (settings.profile + 1) % profiles.length; load(); }
+    flash(('      ' + cur().name).slice(-6));
+  }
 }
-// Any press silences a ringing finish. Acts on release unless the long press fired; in DONE any button returns to IDLE.
+// A long L in IDLE opens the week editor on its press; any other state ignores it.
+function l_long() {
+  if (state != IDLE) return;
+  longFired |= 1 << B_L; messageUntil = 0; state = WEEK; weekDay = 0;
+  if (!week) { week = []; for (var i = 0; i < 7; i++) week.push(settings.profile); }
+  draw();
+}
+// Any press silences a ringing finish. Acts on release unless a long press fired; in DONE any button returns to IDLE.
+// In WEEK, A steps the day's slot and L steps the day; the seventh L returns to IDLE.
 // A press that silences an OFFER ring is hushed per button: its release only clears that bit, so the offer is not answered.
 function button(b, e) {
   if (e != E_UP) {
@@ -258,18 +295,20 @@ function button(b, e) {
   }
   if (ringTimer != -1) stopRing();
   if (e != E_UP) return;
-  if (hush & (1 << b)) { hush &= ~(1 << b); if (b == B_A) longFired = 0; draw(); return; }
+  if (hush & (1 << b)) { hush &= ~(1 << b); longFired &= ~(1 << b); draw(); return; }
   if (b == B_A) stopRepeat();
-  // longFired is only set by A, so an L release while A is held is not swallowed.
-  var longPress = b == B_A && longFired;
+  // A long press sets its own bit, so a release of the other button is not swallowed.
+  var longPress = longFired & (1 << b);
   // A press ends any word on screen, the intro included, so its own screen shows at once.
   if (!longPress) messageUntil = 0;
   if (!longPress) {
     if (state == DONE) state = IDLE;
-    else if (state == IDLE && b == B_A) start();
-    else if (state == IDLE && b == B_L) { state = EDIT; field = 0; }
+    else if (state == IDLE && b == B_A) { if (!rest) start(); }
+    else if (state == IDLE && b == B_L) { rest = 0; state = EDIT; field = 0; }
     else if (state == EDIT && b == B_A) bump();
     else if (state == EDIT && b == B_L) nextField();
+    else if (state == WEEK && b == B_A) week[weekDay] = week[weekDay] + 1 < profiles.length ? week[weekDay] + 1 : -1;
+    else if (state == WEEK && b == B_L) { if (++weekDay == 7) { weekDay = 0; state = IDLE; planDay = -1; planToday(); } }
     else if (state == RUNNING && b == B_A) { if (paused) resume(); else pause(); }
     else if (state == RUNNING && paused && b == B_L) reset();
     else if (state == OFFER && b == B_A) {
@@ -279,7 +318,7 @@ function button(b, e) {
     }
     else if (state == OFFER && b == B_L) state = IDLE;
   }
-  if (b == B_A) longFired = 0;
+  longFired &= ~(1 << b);
   updateSubscriptions();
   draw();
 }

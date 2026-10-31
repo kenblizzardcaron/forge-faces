@@ -29,6 +29,17 @@ The face ships with five identical slots, `SLOt 1` to `SLOt 5`: reps, last level
 | pull-ups | reps | 5 sets → 1 × 50, PACE 3, 6:00 | 84 |
 | plank | hold | 5 holds → 1 × 5:00, 10:00 | 117 |
 
+## Week
+
+A week plan gives each day a slot or a rest day, and the face opens on today's. Press **A** and go.
+
+- **Rest days:** the face shows `rESt` and **A** doesn't start anything. Hold **A** to pick a slot anyway.
+- **Override:** hold **A** when idle to step to the next slot. Your pick stays until midnight, even if you leave the face, and the next day goes back to the plan.
+- **Midnight:** a face left idle on screen moves to the new day within the hour, and a running session isn't interrupted.
+- **Editing:** hold **L** when idle. The day digits show `Mo` to `Su` and the main digits show that day's slot. **A** steps through the slots and `rESt`, **L** goes to the next day, and after `Su` the face returns to idle on today's plan.
+
+With no plan, the face stays on the slot you picked. Opening the editor starts a plan with every day on the current slot. The week's edits last as long as other on-watch edits, so keep a permanent plan in [local.json](#localjson).
+
 ## The ladder
 
 Every ladder climbs in four stretches, then ends at one set of the top total:
@@ -60,11 +71,15 @@ Reps split into declining sets; when the total doesn't divide evenly, the extra 
 
 | Button | Does |
 | --- | --- |
-| **A** (idle) | Start, with a 5 s lead-in that shows the session |
+| **A** (idle) | Start, with a 5 s lead-in that shows the session; nothing on `rESt` |
+| Hold **A** (idle) | Step to the next slot; from `rESt`, leave rest on the current slot |
 | **A** (running) | Pause / resume |
 | **L** (paused) | Reset |
 | **L** (idle) | Edit: SLOt → TYPE → LASt → LEVEL → SEtS → PACE → LEn → done (holds skip PACE) |
+| Hold **L** (idle) | Edit the [week](#week) |
 | **A** (editing) | Raise the value (hold to repeat; it wraps to the minimum after the maximum) |
+| **A** (week) | Step the day's slot, then `rESt` |
+| **L** (week) | Next day; after `Su`, back to idle |
 | **A** (offer) | Accept the next level and return to idle |
 | **L** (offer) | Keep the level and return to idle |
 | Any button (finish beeping) | Silence and return to idle; after a ladder finish below the last level, the offer follows |
@@ -75,10 +90,12 @@ Reps split into declining sets; when the total doesn't divide evenly, the extra 
 | --- | --- |
 | Intro | The slot's name (`SLOt 1`) for 1 s when the face opens idle; any button skips it |
 | Idle | `S1` on the day digits (S for set, so it reads like `51`), total time and set 1's reps (or hold seconds) on the main digits (`10:00 21`); `Er` when manual settings can't work |
+| Rest day | `rESt` when the plan rests today |
 | Edit SLOt | The slot number on the day digits and the slot's name on the main digits |
 | Edit TYPE | `rEPS` or `HOLd` |
 | Edit LASt | ` 1` (one set) on the day digits and the last level's total on the main digits (`    50`, or ` 5:00` for a hold) |
 | Edit LEVEL | The level's sets on the day digits, the level and its total on the main digits (` 77 91`); `oFF` at level 0 |
+| Edit week | The day (`Mo`) on the day digits and its slot's name or `rESt` on the main digits |
 | Offer | `UP` and the next level on the main digits (` 78 UP`) after a ladder finish below the last level |
 | Last level | `GOAL` for 3 s when you accept the slot's last level |
 | Lead-in | 5 to 1 on the day digits while the main digits spell out the session, one per second: `91 rEP` (or `HOLd`), `10:00`, `5 SEtS`, `77 LEU`, then `GO` with set 1's reps (`GO  21`). At level 0, `3 SEC` in place of the level (`oFF` for a hold) |
@@ -107,9 +124,11 @@ Forge has no storage yet, so on-watch edits last until the watch reboots or the 
   {"name": "PUSH", "sets": 5, "top": 100, "pace": 3, "base": 600, "level": 77},
   {"name": "PULL", "top": 50, "base": 360},
   {"name": "PLAnK", "hold": 1, "top": 300}
-]}}
+], "week": ["PUSH", "PULL", "PUSH", "rESt", "PUSH", "PULL", "PLAnK"]}}
 ```
 
-`profiles` replaces the whole list of slots (as many as fit the 8158-byte limit). Each needs a `name` (up to 6 LCD characters); the rest default to `hold: 0, sets: 5, top: 50, pace: 3, base: 600, level: 1`. `top` is the last level (seconds for a hold) and `base` is LEn in seconds. `profile` picks the slot the face boots on, counting from 0. A misspelled key, a nameless profile or a `profile` past the list fails the build.
+`profiles` replaces the whole list of slots (as many as fit the 8158-byte limit). Each needs a `name` (up to 6 LCD characters); the rest default to `hold: 0, sets: 5, top: 50, pace: 3, base: 600, level: 1`. `top` is the last level (seconds for a hold) and `base` is LEn in seconds. `profile` picks the slot the face boots on, counting from 0. `week` is seven slot names, Monday first, with `rESt` for a rest day; spaces around a name don't count. Leave it out for no plan. A misspelled key, a nameless profile, a `profile` past the list or a `week` that isn't seven known names fails the build.
+
+The main digits tie the top and bottom bars of cells 0 and 2, so a `P` or `L` there draws wrong. `PUSHUP` and `PULLUP` both hit that; a trailing space (`"PUSH "`) moves a shorter name left a cell, off cell 2.
 
 Level numbers changed when the ladder became scored (100 push-ups in 10:00 at PACE 3 moved from level 44 to level 86), so set your level again after upgrading.
