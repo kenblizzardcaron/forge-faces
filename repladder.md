@@ -33,10 +33,10 @@ The face ships with five identical slots, `SLOt 1` to `SLOt 5`: reps, last level
 
 Every ladder climbs in four stretches, then ends at one set of the top total:
 
-1. **Add reps.** Starting sets stay fixed while the total grows from the easiest valid session to the top. Reps drop by one per set, so 5 sets start at 15 reps (5+4+3+2+1). The total grows by +1 per level, or Count ÷ 100 rounded up. Holds start at 10 s per hold and grow 1 s per hold per level.
+1. **Add reps.** Starting sets stay fixed while the total grows from the easiest valid session to the top. Reps drop by one per set, so 5 sets start at 15 reps (5+4+3+2+1). The total grows by 1 rep per level, or more for big tops (Count ÷ 100, rounded up). Holds start at 10 s per hold and grow 1 s per hold per level.
 2. **Cut time.** The total stays at the top while the session gets 5 s shorter per level, down to 30 s of rest between sets. Thirty seconds is about one refill half-time for the muscle's fast energy store (phosphocreatine), inside the ACSM's ≤90 s range for endurance training; shorter, the next set is mostly a continuation of the last.
 3. **Drop a set.** One fewer set, the time carries over, and any level still easier than the last is skipped, down to 2 sets.
-4. **Go over target.** 2 sets at 30 s rest, adding Count ÷ 50 rounded up per level, until the next level would be as hard as the last one.
+4. **Go over target.** 2 sets at 30 s rest, adding Count ÷ 50 rounded up per level, stopping before a level would be as hard as the final one-set level.
 
 A level's score is the fresh max it takes, assuming you hold PACE: reps drain stamina, and rest refills it with a 90 s time constant. Each level scores at least as high as the one before.
 
