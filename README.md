@@ -11,7 +11,7 @@ Custom watch faces for the [Ollee Watch](https://www.olleewatch.com), written fo
 
 ## Try a face
 
-Forge is in Beta 1, so faces run in the emulator only; Ollee plans deploying to the watch for Beta 2. The hosted emulator links are the easiest way to share a face.
+The hosted emulator links are the easiest way to share a face. To put one on the watch (Forge Beta 2), get its `.min.js` onto your phone and load it in the Ollee Watch app under **Settings > Forge Apps > Load from file**, then send it to Forge A, B or C; see Ollee's [Deploying to your watch](https://github.com/olleewatch/forge_emulator/blob/main/docs/guides/deploying-to-watch.md).
 
 **Hosted:** open a face's **Open in emulator** link above, then click **Run**. The link loads the face into the editor but doesn't start it.
 
