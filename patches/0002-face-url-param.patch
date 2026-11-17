@@ -1,71 +1,53 @@
-From 86dac67c3cff90a3b324617e852db96d356c89fd Mon Sep 17 00:00:00 2001
+From bb5c1045767f95e48aa695a0043ec0f1b9e46ec0 Mon Sep 17 00:00:00 2001
 From: Ken Blizzard-Caron <ken@blizzardcaron.com>
-Date: Thu, 22 Oct 2026 22:37:18 -0600
+Date: Mon, 16 Nov 2026 21:15:08 -0700
 Subject: [PATCH] Preload a face from the URL: ?face=<name> loads
  faces/<name>.js
 
 Its prebuilt faces/<name>.min.js goes in the minified tab untouched; the in-page
 minifier never renames, so regenerating it would undo the build. Names are
 limited to [A-Za-z0-9_-]; an unknown face logs the error and loads the template.
+The load replaces defaultExampleReady, so review mode still waits for it.
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---
- js/app.js | 34 +++++++++++++++++++++++++++-------
- 1 file changed, 27 insertions(+), 7 deletions(-)
+ js/app.js | 23 ++++++++++++++++++++++-
+ 1 file changed, 22 insertions(+), 1 deletion(-)
 
 diff --git a/js/app.js b/js/app.js
-index 61bd17b..38ad568 100644
+index 4369413..497ee4a 100644
 --- a/js/app.js
 +++ b/js/app.js
-@@ -333,21 +333,41 @@ function a_short() {
+@@ -353,7 +353,28 @@ function loadDefaultExampleScript() {
+     .then(loadDefaultExample)
+     .catch(() => loadDefaultExample(DEFAULT_EXAMPLE_FALLBACK));
  }
- `;
- 
--function loadDefaultExample(text) {
-+function loadDefaultExample(text, name = DEFAULT_EXAMPLE) {
-   editor.value = text;
--  filenameInput.value = DEFAULT_EXAMPLE;
-+  filenameInput.value = name;
-   updateTabLabels();
-   updateSizeMeter();
-   warnIfOverByteLimit(text, FORGE_SCRIPT_BYTE_LIMIT_WARNING);
- }
- 
--fetch(`examples/${DEFAULT_EXAMPLE}`)
--  .then((res) => {
-+function fetchText(path) {
-+  return fetch(path).then((res) => {
-     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-     return res.text();
--  })
--  .then(loadDefaultExample)
--  .catch(() => loadDefaultExample(DEFAULT_EXAMPLE_FALLBACK));
-+  });
-+}
-+
-+function loadTemplate() {
-+  fetchText(`examples/${DEFAULT_EXAMPLE}`)
-+    .then((text) => loadDefaultExample(text))
-+    .catch(() => loadDefaultExample(DEFAULT_EXAMPLE_FALLBACK));
-+}
-+
+-const defaultExampleReady = loadDefaultExampleScript();
 +// ?face=<name> preloads faces/<name>.js and puts its prebuilt faces/<name>.min.js in the
 +// minified tab as-is: the in-page minifier never renames, so regenerating it would undo the build.
-+const faceParam = new URLSearchParams(location.search).get('face');
-+if (faceParam && /^[\w-]+$/.test(faceParam)) {
-+  Promise.all([fetchText(`faces/${faceParam}.js`), fetchText(`faces/${faceParam}.min.js`)])
++function loadFaceScript(face) {
++  const fetchText = (path) => fetch(path).then((res) => {
++    if (!res.ok) throw new Error(`HTTP ${res.status}`);
++    return res.text();
++  });
++  return Promise.all([fetchText(`faces/${face}.js`), fetchText(`faces/${face}.min.js`)])
 +    .then(([source, built]) => {
-+      loadDefaultExample(source, `${faceParam}.js`);
++      loadEditorScript(source, `${face}.js`);
 +      editorMinified.value = built;
 +      minifiedSourceSnapshot = source;
 +    })
-+    .catch((e) => { logError(`Couldn't load face "${faceParam}": ${e.message}`); loadTemplate(); });
-+} else {
-+  loadTemplate();
++    .catch((e) => {
++      logError(`Couldn't load face "${face}": ${e.message}`);
++      return loadDefaultExampleScript();
++    });
 +}
++const faceParam = new URLSearchParams(location.search).get('face');
++const defaultExampleReady = faceParam && /^[\w-]+$/.test(faceParam)
++  ? loadFaceScript(faceParam)
++  : loadDefaultExampleScript();
  
- function setStatus(text, cls) {
-   statusEl.textContent = text;
+ // Puts a script in the editor as if it had been loaded from a file.
+ function loadEditorScript(text, fileName) {
 -- 
 2.39.5
 
